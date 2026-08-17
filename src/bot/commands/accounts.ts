@@ -13,7 +13,9 @@ export const accounts: Command = {
       s
         .setName('list')
         .setDescription('Show which accounts are linked')
-        .addUserOption((o) => o.setName('user').setDescription('Whose accounts (defaults to you)')),
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Which player — pick yourself for your own').setRequired(true),
+        ),
     )
     .addSubcommand((s) =>
       s
@@ -79,7 +81,7 @@ export const accounts: Command = {
 }
 
 async function list(i: Parameters<Command['execute']>[0]) {
-  const who = i.options.getUser('user') ?? i.user
+  const who = i.options.getUser('user', true)
   const linked = store.forUser(who.id)
 
   if (!linked.length) {

@@ -33,7 +33,9 @@ export const pool: Command = {
       s
         .setName('view')
         .setDescription("Show a player's pool")
-        .addUserOption((o) => o.setName('user').setDescription('Whose pool (defaults to you)')),
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Which player — pick yourself for your own').setRequired(true),
+        ),
     ),
 
   async execute(i) {
@@ -146,7 +148,7 @@ function describe(rows: PoolRow[]): string {
 }
 
 async function showPool(i: Parameters<Command['execute']>[0]) {
-  const who = i.options.getUser('user') ?? i.user
+  const who = i.options.getUser('user', true)
   const rows = pools.forPlayer(who.id)
 
   if (!rows.length) {

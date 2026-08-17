@@ -17,7 +17,7 @@ export const profile: Command = {
   data: new SlashCommandBuilder()
     .setName('profile')
     .setDescription('Rank, recent champions and form for a player')
-    .addUserOption((o) => o.setName('user').setDescription('Whose profile (defaults to you)'))
+    .addUserOption((o) => o.setName('user').setDescription('Which player — pick yourself for your own').setRequired(true))
     .addStringOption((o) =>
       o.setName('account').setDescription('Which account (defaults to their main)').setAutocomplete(true),
     ),
@@ -36,7 +36,7 @@ export const profile: Command = {
   },
 
   async execute(i) {
-    const who = i.options.getUser('user') ?? i.user
+    const who = i.options.getUser('user', true)
     const chosen = i.options.getString('account')
     const linked = accounts.forUser(who.id)
     const player = chosen ? linked.find((a) => a.puuid === chosen) : linked[0]

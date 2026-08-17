@@ -7,14 +7,14 @@ import { baseEmbed, GOLD } from './format.js'
 
 const EVERYONE = [
   ['/register `riot-id:`', 'Link a Riot account. Do this first. Run it again to add a second account — up to five.'],
-  ['/accounts list `[user]`', 'See which accounts are linked and which is the main.'],
+  ['/accounts list `user:`', 'See which accounts are linked and which is the main.'],
   ['/accounts main `account:`', 'Choose which account counts as your main.'],
   ['/accounts remove `account:`', 'Unlink an account.'],
   ['/profile `[user]` `[account]`', 'Rank, form this week, most-played champions, last five games. Defaults to the main account.'],
   ['/team `a|b`', 'A whole roster at a glance, with a multi-search link.'],
   ['/multi `a|b`', 'Just the op.gg multi-search link for a roster.'],
   ['/pool edit `position:`', 'Grade your champions for a role: S, A, B, Willing to learn, Can’t play. Paste comma-separated lists — whatever is left in the boxes becomes your pool.'],
-  ['/pool view `[user]`', "Show someone's pool."],
+  ['/pool view `user:`', "Show someone's pool. Pick yourself for your own."],
   ['/help', 'This message.'],
 ] as const
 
@@ -33,6 +33,7 @@ export function helpEmbed() {
     .setTitle('Royal Bears bot — what you can do')
     .setDescription(
       'Type `/` in any channel and Discord will suggest these as you go. ' +
+        'Options marked `like:this` are asked for automatically — the ones in `[brackets]` are optional. ' +
         'Most replies are only visible to you.',
     )
     .addFields(

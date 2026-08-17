@@ -119,7 +119,7 @@ Champion pools and scrims work with no key at all.
 |---|---|---|
 | `/register riot-id:Name#TAG` | anyone | Links a Riot account. Run again to add another, up to five |
 | `/accounts list\|main\|remove` | anyone | See linked accounts, pick a main, unlink one |
-| `/profile [user] [account]` | anyone | Rank, form, most-played champions, last five games. Defaults to the main account |
+| `/profile user: [account]` | anyone | Rank, form, most-played champions, last five games. Defaults to the main account |
 | `/team a\|b` | anyone | The roster at a glance, with a multi-search link |
 | `/multi a\|b` | anyone | Just the op.gg multi-search link for a roster |
 | `/pool edit `position:`` | anyone | Grade a role's champions S to Can't play |
@@ -130,6 +130,16 @@ Champion pools and scrims work with no key at all.
 | `/setkey` | staff | Paste a fresh Riot key |
 
 "Staff" means Staff, LoL Officer, either captain, Coach, or the server owner.
+
+## Why some options are required
+
+Discord only opens an option's picker automatically when that option is
+required. A command whose options are all optional looks like it takes none —
+you have to know to click for them.
+
+So `/profile`, `/pool view` and `/accounts list` all require `user`. Picking
+yourself is one click, and the alternative was a command that appeared to do
+nothing until you went hunting for its options.
 
 ## Multiple accounts
 
