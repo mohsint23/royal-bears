@@ -126,9 +126,24 @@ Champion pools and scrims work with no key at all.
 | `/pool gaps a\|b` | anyone | Which positions the roster is thin on |
 | `/scrim when: team:` | staff | Posts a scrim with In / Maybe / Out buttons |
 | `/refresh` | staff | Pull everyone's latest games from Riot right now |
+| `/help` | anyone | The command list, replied privately |
 | `/setkey` | staff | Paste a fresh Riot key |
 
 "Staff" means Staff, LoL Officer, either captain, Coach, or the server owner.
+
+## The pinned command list
+
+```bash
+npm run post-help              # posts to #bot-commands
+npm run post-help -- general   # or any other channel
+```
+
+Posts the command list and pins it. Run it again after changing commands and it
+edits the existing pin rather than posting a second one, so the pin stays put
+and nobody gets re-notified.
+
+The text comes from `src/bot/help.ts`, which `/help` also uses — so the pin and
+the command can never drift apart.
 
 ## What it does on its own
 
