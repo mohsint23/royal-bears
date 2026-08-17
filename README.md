@@ -117,8 +117,9 @@ Champion pools and scrims work with no key at all.
 
 | Command | Who | What it does |
 |---|---|---|
-| `/register riot-id:Name#TAG` | anyone | Links a Riot account. Staff can pass `user:` to register someone else |
-| `/profile [user]` | anyone | Rank, form, most-played champions, last five games, op.gg link |
+| `/register riot-id:Name#TAG` | anyone | Links a Riot account. Run again to add another, up to five |
+| `/accounts list\|main\|remove` | anyone | See linked accounts, pick a main, unlink one |
+| `/profile [user] [account]` | anyone | Rank, form, most-played champions, last five games. Defaults to the main account |
 | `/team a\|b` | anyone | The roster at a glance, with a multi-search link |
 | `/multi a\|b` | anyone | Just the op.gg multi-search link for a roster |
 | `/pool edit `position:`` | anyone | Grade a role's champions S to Can't play |
@@ -129,6 +130,21 @@ Champion pools and scrims work with no key at all.
 | `/setkey` | staff | Paste a fresh Riot key |
 
 "Staff" means Staff, LoL Officer, either captain, Coach, or the server owner.
+
+## Multiple accounts
+
+A player can link up to five Riot accounts. The first becomes their **main**;
+the rest are alts.
+
+- `/team` and `/multi` use the main account, so a roster overview stays one line
+  per person.
+- **Rank roles come from the best account**, not the main. Someone whose smurf
+  is two divisions higher is that good, and a captain wants to know.
+- The weekly roundup counts games across every linked account.
+- Removing a main promotes the oldest remaining account, so a player is never
+  left without one.
+
+`/profile account:` picks a specific account; leave it off for the main.
 
 ## Champion pools
 

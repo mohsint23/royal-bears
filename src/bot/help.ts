@@ -6,8 +6,11 @@
 import { baseEmbed, GOLD } from './format.js'
 
 const EVERYONE = [
-  ['/register `riot-id:`', 'Link your Riot account. Do this first — nothing else works until you have.'],
-  ['/profile `[user]`', 'Rank, form this week, most-played champions, last five games, op.gg link.'],
+  ['/register `riot-id:`', 'Link a Riot account. Do this first. Run it again to add a second account — up to five.'],
+  ['/accounts list `[user]`', 'See which accounts are linked and which is the main.'],
+  ['/accounts main `account:`', 'Choose which account counts as your main.'],
+  ['/accounts remove `account:`', 'Unlink an account.'],
+  ['/profile `[user]` `[account]`', 'Rank, form this week, most-played champions, last five games. Defaults to the main account.'],
   ['/team `a|b`', 'A whole roster at a glance, with a multi-search link.'],
   ['/multi `a|b`', 'Just the op.gg multi-search link for a roster.'],
   ['/pool edit `position:`', 'Grade your champions for a role: S, A, B, Willing to learn, Can’t play. Paste comma-separated lists — whatever is left in the boxes becomes your pool.'],
@@ -35,6 +38,12 @@ export function helpEmbed() {
     .addFields(
       { name: 'Everyone', value: list(EVERYONE) },
       { name: 'Staff and captains', value: list(STAFF) },
+      {
+        name: 'Smurfs and second accounts',
+        value:
+          'Link as many as five. The **main** is what `/team` and `/multi` use, and your rank role comes ' +
+          'from your best account, not just the main one.',
+      },
       {
         name: 'If the tracker goes quiet',
         value:

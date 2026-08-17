@@ -2,7 +2,7 @@ import {
   MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js'
-import { players } from '../db.js'
+import { accounts } from '../db.js'
 import { KeyExpiredError } from '../riot.js'
 import { syncAll, syncRankRoles } from '../sync.js'
 import { isStaff } from '../util.js'
@@ -18,7 +18,7 @@ export const refresh: Command = {
       await i.reply({ content: 'Staff only.', flags: MessageFlags.Ephemeral })
       return
     }
-    const count = players.all().length
+    const count = accounts.all().length
     if (!count) {
       await i.reply({ content: 'Nobody has registered yet.', flags: MessageFlags.Ephemeral })
       return
@@ -29,7 +29,7 @@ export const refresh: Command = {
       const result = await syncAll()
       if (i.guild) await syncRankRoles(i.guild)
       await i.editReply(
-        `Refreshed ${count} player${count === 1 ? '' : 's'} — ${result.newGames} new game${
+        `Refreshed ${count} account${count === 1 ? '' : 's'} — ${result.newGames} new game${
           result.newGames === 1 ? '' : 's'
         }, ${result.changes.length} rank change${result.changes.length === 1 ? '' : 's'}.`,
       )

@@ -1,8 +1,5 @@
-import {
-  MessageFlags,
-  SlashCommandBuilder,
-} from 'discord.js'
-import { players } from '../db.js'
+import { MessageFlags, SlashCommandBuilder } from 'discord.js'
+import { accounts, MAX_ACCOUNTS, riotId } from '../db.js'
 import { getAccount, KeyExpiredError } from '../riot.js'
 import { baseEmbed, opggLink } from '../format.js'
 import { isStaff, parseRiotId } from '../util.js'
@@ -11,7 +8,7 @@ import type { Command } from './types.js'
 export const register: Command = {
   data: new SlashCommandBuilder()
     .setName('register')
-    .setDescription('Link a Riot account so the tracker can follow it')
+    .setDescription('Link a Riot account. Run it again to add a second one')
     .addStringOption((o) =>
       o.setName('riot-id').setDescription('Your Riot ID, for example Faker#KR1').setRequired(true),
     )
@@ -21,9 +18,7 @@ export const register: Command = {
 
   async execute(i) {
     const target = i.options.getUser('user')
-    const member = i.member && 'roles' in i.member ? i.member : null
-
-    if (target && target.id !== i.user.id && !isStaff(member as never)) {
+    if (target && target.id !== i.user.id && !isStaff(i.member as never)) {
       await i.reply({ content: 'Only staff can register someone else.', flags: MessageFlags.Ephemeral })
       return
     }
@@ -38,34 +33,53 @@ export const register: Command = {
       return
     }
 
+    if (accounts.countFor(who.id) >= MAX_ACCOUNTS) {
+      await i.reply({
+        content: `${who.id === i.user.id ? 'You have' : `${who} has`} the maximum of ${MAX_ACCOUNTS} accounts linked. Remove one with \`/accounts remove\` first.`,
+        flags: MessageFlags.Ephemeral,
+      })
+      return
+    }
+
     await i.deferReply({ flags: MessageFlags.Ephemeral })
 
     try {
       const account = await getAccount(parsed.gameName, parsed.tagLine)
-      const existing = players.byPuuid(account.puuid)
+      const existing = accounts.byPuuid(account.puuid)
+
       if (existing && existing.discord_id !== who.id) {
-        await i.editReply(`That Riot account is already registered to <@${existing.discord_id}>.`)
+        await i.editReply(`That Riot account is already linked to <@${existing.discord_id}>.`)
+        return
+      }
+      if (existing) {
+        await i.editReply(`**${riotId(existing)}** is already linked to ${who}.`)
         return
       }
 
-      players.upsert({
-        discord_id: who.id,
+      const { becameMain } = accounts.add({
         puuid: account.puuid,
+        discord_id: who.id,
         game_name: account.gameName,
         tag_line: account.tagLine,
       })
 
+      const linked = accounts.forUser(who.id)
+
       await i.editReply({
         embeds: [
           baseEmbed()
-            .setTitle('Registered')
+            .setTitle(becameMain ? 'Registered' : 'Account added')
             .setDescription(
               `**${account.gameName}#${account.tagLine}** is now linked to ${who}.\n` +
                 `[Open on op.gg](${opggLink(account.gameName, account.tagLine)})`,
             )
             .addFields({
-              name: 'What happens now',
-              value: 'The tracker picks up their games on the next refresh. `/profile` works straight away.',
+              name: becameMain ? 'What happens now' : `Your accounts (${linked.length}/${MAX_ACCOUNTS})`,
+              value: becameMain
+                ? 'The tracker picks up your games on the next refresh. `/profile` works straight away.\n\nAdd another account by running `/register` again.'
+                : linked
+                    .map((a) => `${a.is_main ? '**main**' : 'alt'} — ${riotId(a)}`)
+                    .join('\n') + '\n\nChange which is your main with `/accounts main`.',
             }),
         ],
       })

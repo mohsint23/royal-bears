@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js'
-import { players } from '../db.js'
+import { accounts } from '../db.js'
 import { baseEmbed, opggMultiLink } from '../format.js'
 import { rosterMembers, type TeamKey } from '../util.js'
 import type { Command } from './types.js'
@@ -23,7 +23,7 @@ export const multi: Command = {
     const key = i.options.getString('team', true) as TeamKey
     const roster = await rosterMembers(i.guild, key)
     const registered = roster
-      .map((m) => players.byDiscordId(m.id))
+      .map((m) => accounts.mainFor(m.id))
       .filter((p): p is NonNullable<typeof p> => Boolean(p))
 
     if (!registered.length) {

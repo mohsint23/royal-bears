@@ -16,13 +16,17 @@ export const db = new Database(config.databasePath)
 db.pragma('journal_mode = WAL')
 
 db.exec(`
-  CREATE TABLE IF NOT EXISTS players (
-    discord_id    TEXT PRIMARY KEY,
-    puuid         TEXT NOT NULL UNIQUE,
+  -- A player may link several Riot accounts. Exactly one is their main, which
+  -- is what /team, /multi and the rank roles use.
+  CREATE TABLE IF NOT EXISTS accounts (
+    puuid         TEXT PRIMARY KEY,
+    discord_id    TEXT NOT NULL,
     game_name     TEXT NOT NULL,
     tag_line      TEXT NOT NULL,
+    is_main       INTEGER NOT NULL DEFAULT 0,
     registered_at INTEGER NOT NULL
   );
+  CREATE INDEX IF NOT EXISTS accounts_by_discord ON accounts (discord_id);
 
   -- One row per player per ranked queue: their standing as of the last poll.
   CREATE TABLE IF NOT EXISTS ranks (
@@ -91,6 +95,18 @@ if (!poolColumns.some((c) => c.name === 'confidence')) {
   db.exec(`ALTER TABLE pools ADD COLUMN confidence TEXT NOT NULL DEFAULT 'B'`)
 }
 
+// Accounts used to be one row per Discord user. Carry those across as mains.
+const hasOldPlayers = db
+  .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'players'`)
+  .get()
+if (hasOldPlayers) {
+  db.exec(`
+    INSERT OR IGNORE INTO accounts (puuid, discord_id, game_name, tag_line, is_main, registered_at)
+      SELECT puuid, discord_id, game_name, tag_line, 1, registered_at FROM players;
+    DROP TABLE players;
+  `)
+}
+
 // The first version of tiers used words. Map them onto the letter grades.
 // Harmless to re-run: nothing matches once it has been done.
 db.exec(`
@@ -99,13 +115,19 @@ db.exec(`
   UPDATE pools SET confidence = 'Willing to learn' WHERE confidence = 'Learning';
 `)
 
-export type Player = {
-  discord_id: string
+export type Account = {
   puuid: string
+  discord_id: string
   game_name: string
   tag_line: string
+  is_main: number
   registered_at: number
 }
+
+/** How many Riot accounts one person may link. */
+export const MAX_ACCOUNTS = 5
+
+export const riotId = (a: Pick<Account, 'game_name' | 'tag_line'>) => `${a.game_name}#${a.tag_line}`
 
 export type RankRow = {
   puuid: string
@@ -143,21 +165,67 @@ export const settings = {
   },
 }
 
-export const players = {
-  all: () => db.prepare('SELECT * FROM players').all() as Player[],
-  byDiscordId: (id: string) =>
-    db.prepare('SELECT * FROM players WHERE discord_id = ?').get(id) as Player | undefined,
+export const accounts = {
+  all: () => db.prepare('SELECT * FROM accounts ORDER BY discord_id, is_main DESC').all() as Account[],
+
+  /** Everything one person has linked, their main first. */
+  forUser: (discordId: string) =>
+    db
+      .prepare('SELECT * FROM accounts WHERE discord_id = ? ORDER BY is_main DESC, registered_at ASC')
+      .all(discordId) as Account[],
+
+  mainFor: (discordId: string) =>
+    db
+      .prepare('SELECT * FROM accounts WHERE discord_id = ? ORDER BY is_main DESC, registered_at ASC LIMIT 1')
+      .get(discordId) as Account | undefined,
+
   byPuuid: (puuid: string) =>
-    db.prepare('SELECT * FROM players WHERE puuid = ?').get(puuid) as Player | undefined,
-  upsert(p: Omit<Player, 'registered_at'>) {
+    db.prepare('SELECT * FROM accounts WHERE puuid = ?').get(puuid) as Account | undefined,
+
+  countFor: (discordId: string) =>
+    (db.prepare('SELECT COUNT(*) n FROM accounts WHERE discord_id = ?').get(discordId) as { n: number }).n,
+
+  /** The first account someone links becomes their main automatically. */
+  add(a: Omit<Account, 'is_main' | 'registered_at'>) {
+    const first = accounts.countFor(a.discord_id) === 0
     db.prepare(`
-      INSERT INTO players (discord_id, puuid, game_name, tag_line, registered_at)
-      VALUES (@discord_id, @puuid, @game_name, @tag_line, @now)
-      ON CONFLICT(discord_id) DO UPDATE SET
-        puuid = excluded.puuid, game_name = excluded.game_name, tag_line = excluded.tag_line
-    `).run({ ...p, now: Date.now() })
+      INSERT INTO accounts (puuid, discord_id, game_name, tag_line, is_main, registered_at)
+      VALUES (@puuid, @discord_id, @game_name, @tag_line, @is_main, @now)
+      ON CONFLICT(puuid) DO UPDATE SET
+        discord_id = excluded.discord_id,
+        game_name  = excluded.game_name,
+        tag_line   = excluded.tag_line
+    `).run({ ...a, is_main: first ? 1 : 0, now: Date.now() })
+    return { becameMain: first }
   },
-  remove: (id: string) => db.prepare('DELETE FROM players WHERE discord_id = ?').run(id),
+
+  setMain(discordId: string, puuid: string) {
+    return db.transaction(() => {
+      db.prepare('UPDATE accounts SET is_main = 0 WHERE discord_id = ?').run(discordId)
+      return db.prepare('UPDATE accounts SET is_main = 1 WHERE puuid = ? AND discord_id = ?').run(puuid, discordId)
+        .changes
+    })()
+  },
+
+  /** Removing a main promotes the oldest remaining account so one always exists. */
+  remove(puuid: string) {
+    return db.transaction(() => {
+      const account = accounts.byPuuid(puuid)
+      if (!account) return false
+      db.prepare('DELETE FROM accounts WHERE puuid = ?').run(puuid)
+      if (account.is_main) {
+        const next = accounts.forUser(account.discord_id)[0]
+        if (next) db.prepare('UPDATE accounts SET is_main = 1 WHERE puuid = ?').run(next.puuid)
+      }
+      return true
+    })()
+  },
+
+  /** Distinct Discord users with at least one account linked. */
+  userIds: () =>
+    (db.prepare('SELECT DISTINCT discord_id FROM accounts').all() as { discord_id: string }[]).map(
+      (r) => r.discord_id,
+    ),
 }
 
 export const ranks = {

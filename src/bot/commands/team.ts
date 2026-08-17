@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js'
 import { QUEUE } from '../config.js'
-import { matches, players, ranks } from '../db.js'
+import { accounts, matches, ranks } from '../db.js'
 import { baseEmbed, opggMultiLink, rankLabel, topChampions, winrate } from '../format.js'
 import { rosterMembers, type TeamKey } from '../util.js'
 import type { Command } from './types.js'
@@ -36,7 +36,7 @@ export const team: Command = {
     const missing: string[] = []
 
     for (const member of roster) {
-      const player = players.byDiscordId(member.id)
+      const player = accounts.mainFor(member.id)
       if (!player) {
         missing.push(member.displayName)
         continue

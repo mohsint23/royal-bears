@@ -9,7 +9,7 @@
 
 import type { Client, Guild } from 'discord.js'
 import { config } from '../config.js'
-import { players, settings } from '../db.js'
+import { accounts, riotId, settings } from '../db.js'
 import { hasKey, KeyExpiredError } from '../riot.js'
 import { syncAll, syncRankRoles, type RankChange } from '../sync.js'
 import { baseEmbed, GREEN, RED, rankLabel, tierColour } from '../format.js'
@@ -20,7 +20,7 @@ const KEY_WARNING = 'key_warned_at'
 const WARN_EVERY = 6 * 60 * 60 * 1000
 
 export async function runPoll(guild: Guild) {
-  if (!players.all().length) return
+  if (!accounts.all().length) return
 
   if (!hasKey()) {
     await warnAboutKey(guild, 'No Riot API key is set.')
@@ -73,7 +73,8 @@ async function announceChanges(guild: Guild, changes: RankChange[]) {
           .setColor(up ? GREEN : tierColour(change.after.tier))
           .setTitle(up ? 'Rank up' : 'Rank down')
           .setDescription(
-            `<@${change.player.discord_id}> — **${change.player.game_name}#${change.player.tag_line}**\n` +
+            `<@${change.account.discord_id}> — **${riotId(change.account)}**` +
+              `${change.account.is_main ? '' : ' *(alt)*'}\n` +
               `${rankLabel(change.before)} → **${rankLabel(change.after)}**` +
               `\n*${change.queue === 'solo' ? 'Solo queue' : 'Flex'}*`,
           ),

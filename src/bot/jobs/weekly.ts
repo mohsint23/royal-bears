@@ -5,9 +5,9 @@
 
 import type { Client, Guild } from 'discord.js'
 import { config, QUEUE } from '../config.js'
-import { matches, players, ranks, settings } from '../db.js'
+import { accounts, matches, ranks, settings } from '../db.js'
 import { championIcon } from '../ddragon.js'
-import { baseEmbed, GOLD, rankLabel, topChampions, winrate } from '../format.js'
+import { baseEmbed, GOLD, rankLabel, rankScore, topChampions, winrate } from '../format.js'
 import { statChannel } from './announce.js'
 
 const LAST_RUN = 'last_weekly'
@@ -42,13 +42,22 @@ export async function postWeekly(guild: Guild) {
   if (!channel) return
 
   const since = Date.now() - WEEK
-  const rows = players.all().map((p) => {
-    const games = matches.since(p.puuid, since)
+
+  // A player's week is everything they played, across every account they linked.
+  const rows = accounts.userIds().map((discordId) => {
+    const linked = accounts.forUser(discordId)
+    const games = linked.flatMap((a) => matches.since(a.puuid, since))
+    const best = linked
+      .map((a) => ranks.get(a.puuid, QUEUE.solo))
+      .filter((r): r is NonNullable<typeof r> => Boolean(r?.tier))
+      .sort((a, b) => rankScore(b) - rankScore(a))[0]
+
     return {
-      player: p,
+      discordId,
       games,
       wins: games.filter((g) => g.win).length,
-      solo: ranks.get(p.puuid, QUEUE.solo),
+      solo: best,
+      accountCount: linked.length,
     }
   })
 
@@ -69,7 +78,7 @@ export async function postWeekly(guild: Guild) {
       .slice(0, 5)
       .map(
         (r, idx) =>
-          `${idx + 1}. <@${r.player.discord_id}> — ${r.games.length} games, ${winrate(
+          `${idx + 1}. <@${r.discordId}> — ${r.games.length} games, ${winrate(
             r.wins,
             r.games.length - r.wins,
           )}`,
@@ -84,7 +93,7 @@ export async function postWeekly(guild: Guild) {
     )[0]!
     embed.addFields({
       name: 'Best winrate (5+ games)',
-      value: `<@${best.player.discord_id}> — ${winrate(best.wins, best.games.length - best.wins)}`,
+      value: `<@${best.discordId}> — ${winrate(best.wins, best.games.length - best.wins)}`,
     })
   }
 
@@ -103,7 +112,7 @@ export async function postWeekly(guild: Guild) {
     embed.addFields({
       name: 'Current ranks',
       value: ranked
-        .map((r) => `<@${r.player.discord_id}> — ${rankLabel(r.solo)}`)
+        .map((r) => `<@${r.discordId}> — ${rankLabel(r.solo)}`)
         .join('\n')
         .slice(0, 1024),
     })

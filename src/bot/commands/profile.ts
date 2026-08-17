@@ -3,10 +3,10 @@ import {
   SlashCommandBuilder,
 } from 'discord.js'
 import { QUEUE } from '../config.js'
-import { matches, players, ranks } from '../db.js'
+import { accounts, matches, ranks, riotId } from '../db.js'
 import { championIcon } from '../ddragon.js'
 import { KeyExpiredError } from '../riot.js'
-import { syncPlayer } from '../sync.js'
+import { syncAccount } from '../sync.js'
 import { baseEmbed, kda, opggLink, queueName, rankLabel, tierColour, topChampions, winrate } from '../format.js'
 import type { Command } from './types.js'
 
@@ -17,11 +17,29 @@ export const profile: Command = {
   data: new SlashCommandBuilder()
     .setName('profile')
     .setDescription('Rank, recent champions and form for a player')
-    .addUserOption((o) => o.setName('user').setDescription('Whose profile (defaults to you)')),
+    .addUserOption((o) => o.setName('user').setDescription('Whose profile (defaults to you)'))
+    .addStringOption((o) =>
+      o.setName('account').setDescription('Which account (defaults to their main)').setAutocomplete(true),
+    ),
+
+  async autocomplete(i) {
+    // Autocomplete interactions cannot resolve a user object, only its id.
+    const targetId = (i.options.get('user')?.value as string | undefined) ?? i.user.id
+    const typed = i.options.getFocused().toLowerCase()
+    await i.respond(
+      accounts
+        .forUser(targetId)
+        .filter((a) => riotId(a).toLowerCase().includes(typed))
+        .slice(0, 25)
+        .map((a) => ({ name: `${riotId(a)}${a.is_main ? ' (main)' : ''}`.slice(0, 100), value: a.puuid })),
+    )
+  },
 
   async execute(i) {
     const who = i.options.getUser('user') ?? i.user
-    const player = players.byDiscordId(who.id)
+    const chosen = i.options.getString('account')
+    const linked = accounts.forUser(who.id)
+    const player = chosen ? linked.find((a) => a.puuid === chosen) : linked[0]
 
     if (!player) {
       await i.reply({
@@ -42,7 +60,7 @@ export const profile: Command = {
 
     if (stale) {
       try {
-        await syncPlayer(player)
+        await syncAccount(player)
       } catch (err) {
         warning =
           err instanceof KeyExpiredError
@@ -61,7 +79,9 @@ export const profile: Command = {
       .setColor(tierColour(soloNow?.tier))
       .setTitle(`${player.game_name}#${player.tag_line}`)
       .setURL(opggLink(player.game_name, player.tag_line))
-      .setDescription(`${who}${warning}`)
+      .setDescription(
+        `${who}${player.is_main ? '' : ' · *alt account*'}${warning}`,
+      )
       .addFields(
         {
           name: 'Solo queue',
@@ -111,6 +131,16 @@ export const profile: Command = {
       embed.addFields({
         name: 'Last 5 games',
         value: 'Nothing tracked yet. Games appear after the next refresh.',
+      })
+    }
+
+    const others = linked.filter((a) => a.puuid !== player.puuid)
+    if (others.length) {
+      embed.addFields({
+        name: `Other accounts (${others.length})`,
+        value: others
+          .map((a) => `${a.is_main ? '⭐ ' : ''}**${riotId(a)}** — ${rankLabel(ranks.get(a.puuid, QUEUE.solo))}`)
+          .join('\n'),
       })
     }
 
