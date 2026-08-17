@@ -13,9 +13,12 @@ import {
   OverwriteType,
   PermissionFlagsBits as P,
   type CategoryChannel,
+  type ForumChannel,
   type Guild,
   type OverwriteResolvable,
   type Role,
+  type TextChannel,
+  type VoiceChannel,
 } from 'discord.js'
 import { CATEGORIES, ROLE, ROLES, type CategoryDef, type ChannelDef } from './structure.js'
 
@@ -43,7 +46,7 @@ async function ensureRoles(guild: Guild): Promise<Map<string, Role>> {
     }
     const role = await guild.roles.create({
       name: def.name,
-      color: def.color,
+      colors: def.color === undefined ? undefined : { primaryColor: def.color },
       hoist: def.hoist ?? false,
       mentionable: def.mentionable ?? false,
       permissions: def.permissions ?? [],
@@ -64,25 +67,35 @@ async function ensureRoles(guild: Guild): Promise<Map<string, Role>> {
  */
 async function orderRoles(guild: Guild, byName: Map<string, Role>) {
   const me = await guild.members.fetchMe()
-  const ceiling = me.roles.highest.position
   const ordered = ROLES.map((d) => byName.get(d.name)).filter((r): r is Role => Boolean(r))
+
+  // Only our own role is a hard ceiling. Other apps' roles get pushed down the
+  // list as ours move up, which is fine.
+  const ceiling = me.roles.highest.position
 
   if (ceiling - ordered.length < 1) {
     log(
-      `\n  ! Could not order the roles: the bot's own role sits at position ${ceiling},\n` +
-        `    which leaves no room for ${ordered.length} roles beneath it.\n` +
+      `\n  ! Could not order the roles: only position ${ceiling} and below is available,\n` +
+        `    which leaves no room for ${ordered.length} roles.\n` +
         `    Fix: Server Settings > Roles, drag the bot's role to the top, then re-run.\n`,
     )
     return
   }
 
-  const positions = ordered.map((role, i) => ({ role, position: ceiling - 1 - i }))
-  try {
-    await guild.roles.setPositions(positions)
-    log('  ordered roles')
-  } catch (err) {
-    log(`  ! Could not order the roles (${(err as Error).message}). Drag them manually if it matters.`)
+  // Discord rejects the bulk reorder endpoint here even though each individual
+  // move is permitted, so place them one at a time from the top down.
+  let moved = 0
+  for (const [i, role] of ordered.entries()) {
+    const target = ceiling - 1 - i
+    if (role.position === target) continue
+    try {
+      await role.setPosition(target, { reason: 'Royal Bears server setup' })
+      moved++
+    } catch (err) {
+      log(`  ! Could not move ${role.name}: ${(err as Error).message}`)
+    }
   }
+  log(`  ordered roles (${moved} moved)`)
 }
 
 /** Who can see a category, expressed as Discord permission overwrites. */
@@ -118,7 +131,13 @@ function channelOverwrites(
     deny: [...((everyone?.deny as bigint[]) ?? []), P.SendMessages, P.CreatePublicThreads, P.CreatePrivateThreads],
   })
 
-  for (const name of [ROLE.staff, ROLE.coach]) {
+  // Only hand posting rights to roles that can already see the category.
+  // Granting ViewChannel to a role the category excludes would leak the channel.
+  const posters = category.viewableBy
+    ? [ROLE.staff, ROLE.coach].filter((n) => category.viewableBy!.includes(n))
+    : [ROLE.staff, ROLE.coach]
+
+  for (const name of posters) {
     const role = roles.get(name)
     if (!role) continue
     const existing = merged.get(role.id)
@@ -166,10 +185,21 @@ async function ensureChannels(guild: Guild, roles: Map<string, Role>) {
       // Match on type as well as name: a category can hold both a #general text
       // channel and a "General" voice channel, and they are not the same thing.
       const existing = guild.channels.cache.find(
-        (c) => c.parentId === parent!.id && c.type === wanted && (c.name === slug || c.name === channel.name),
+        (c): c is TextChannel | VoiceChannel | ForumChannel =>
+          c.parentId === parent!.id && c.type === wanted && (c.name === slug || c.name === channel.name),
       )
 
       if (existing) {
+        // Re-apply the blueprint rather than skipping: a change to who can see a
+        // category has to reach the channels inside it, not just the category.
+        await existing.permissionOverwrites.set(
+          channelOverwrites(guild, category, channel, roles),
+          'Royal Bears server setup',
+        )
+        const takesTopic = existing.type === ChannelType.GuildText || existing.type === ChannelType.GuildForum
+        if (channel.topic && takesTopic && existing.topic !== channel.topic) {
+          await existing.setTopic(channel.topic, 'Royal Bears server setup')
+        }
         reused.push(`#${channel.name}`)
         continue
       }

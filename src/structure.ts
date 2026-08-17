@@ -10,6 +10,9 @@ import { PermissionFlagsBits as P } from 'discord.js'
 
 export const ROLE = {
   staff: 'Staff',
+  officer: 'LoL Officer',
+  captainA: 'Team A Captain',
+  captainB: 'Team B Captain',
   coach: 'Coach',
   aTeam: 'A Team',
   bTeam: 'B Team',
@@ -53,6 +56,36 @@ export const ROLES: RoleDef[] = [
       P.DeafenMembers,
       P.MoveMembers,
     ],
+  },
+  {
+    name: ROLE.officer,
+    color: 0xb87be8,
+    hoist: true,
+    mentionable: true,
+    permissions: [
+      P.ManageMessages,
+      P.ManageNicknames,
+      P.ManageEvents,
+      P.KickMembers,
+      P.ModerateMembers,
+      P.MentionEveryone,
+      P.MuteMembers,
+      P.MoveMembers,
+    ],
+  },
+  {
+    name: ROLE.captainA,
+    color: 0x1e4bb8,
+    hoist: true,
+    mentionable: true,
+    permissions: [P.ManageMessages, P.ManageEvents, P.MentionEveryone, P.MuteMembers, P.MoveMembers],
+  },
+  {
+    name: ROLE.captainB,
+    color: 0x4a7bd4,
+    hoist: true,
+    mentionable: true,
+    permissions: [P.ManageMessages, P.ManageEvents, P.MentionEveryone, P.MuteMembers, P.MoveMembers],
   },
   {
     name: ROLE.coach,
@@ -102,7 +135,10 @@ export type CategoryDef = {
   channels: ChannelDef[]
 }
 
-const TEAM_STAFF = [ROLE.staff, ROLE.coach]
+const TEAM_STAFF = [ROLE.staff, ROLE.coach, ROLE.officer]
+
+/** Only these three people run the tracker, so only they see it. */
+const TRACKER_STAFF = [ROLE.staff, ROLE.officer, ROLE.captainA, ROLE.captainB]
 
 export const CATEGORIES: CategoryDef[] = [
   {
@@ -127,9 +163,9 @@ export const CATEGORIES: CategoryDef[] = [
   },
   {
     name: '🏆 A TEAM',
-    viewableBy: [...TEAM_STAFF, ROLE.aTeam, ROLE.sub],
+    viewableBy: [...TEAM_STAFF, ROLE.captainA, ROLE.aTeam, ROLE.sub],
     channels: [
-      { name: 'a-chat', type: 'text', topic: 'A Team roster chat' },
+      { name: 'chat', type: 'text', topic: 'A Team roster chat' },
       { name: 'a-scrims', type: 'text', topic: 'Scrim scheduling and attendance' },
       { name: 'a-vod-review', type: 'text', topic: 'VOD links and timestamped notes. One thread per game' },
       { name: 'a-champ-pool', type: 'text', topic: 'Who plays what, per role' },
@@ -138,9 +174,9 @@ export const CATEGORIES: CategoryDef[] = [
   },
   {
     name: '🥈 B TEAM',
-    viewableBy: [...TEAM_STAFF, ROLE.bTeam, ROLE.sub],
+    viewableBy: [...TEAM_STAFF, ROLE.captainB, ROLE.bTeam, ROLE.sub],
     channels: [
-      { name: 'b-chat', type: 'text', topic: 'B Team roster chat' },
+      { name: 'chat', type: 'text', topic: 'B Team roster chat' },
       { name: 'b-scrims', type: 'text', topic: 'Scrim scheduling and attendance' },
       { name: 'b-vod-review', type: 'text', topic: 'VOD links and timestamped notes. One thread per game' },
       { name: 'b-champ-pool', type: 'text', topic: 'Who plays what, per role' },
@@ -159,17 +195,10 @@ export const CATEGORIES: CategoryDef[] = [
   },
   {
     name: '📊 TRACKER',
+    viewableBy: TRACKER_STAFF,
     channels: [
       { name: 'stat-updates', type: 'text', readOnly: true, topic: 'Rank changes and weekly roundups, posted by the bot' },
       { name: 'bot-commands', type: 'text', topic: 'Run bot commands in here to keep other channels clean' },
-    ],
-  },
-  {
-    name: '🔒 STAFF',
-    viewableBy: TEAM_STAFF,
-    channels: [
-      { name: 'staff-chat', type: 'text', topic: 'Committee and coaching chat' },
-      { name: 'roster-planning', type: 'text', topic: 'Roster decisions, tryout verdicts, subs' },
     ],
   },
 ]
