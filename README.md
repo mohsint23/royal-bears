@@ -121,7 +121,7 @@ Champion pools and scrims work with no key at all.
 | `/profile [user]` | anyone | Rank, form, most-played champions, last five games, op.gg link |
 | `/team a\|b` | anyone | The roster at a glance, with a multi-search link |
 | `/multi a\|b` | anyone | Just the op.gg multi-search link for a roster |
-| `/pool edit `position:`` | anyone | Set a role's champions, sorted into confidence tiers |
+| `/pool edit `position:`` | anyone | Grade a role's champions S to Can't play |
 | `/pool view [user]` | anyone | Show a player's pool |
 | `/pool gaps a\|b` | anyone | Which positions the roster is thin on |
 | `/scrim when: team:` | staff | Posts a scrim with In / Maybe / Out buttons |
@@ -133,14 +133,19 @@ Champion pools and scrims work with no key at all.
 
 ## Champion pools
 
-`/pool edit position:Mid` opens three boxes, one per confidence tier, pre-filled
-with what is already there:
+`/pool edit position:Mid` opens five boxes, one per tier, pre-filled with what
+is already there:
 
 | Tier | Means |
 |---|---|
-| 🟢 **Comfort** | Blind pick, any game |
-| 🔵 **Confident** | Happy to play |
-| 🟡 **Learning** | Still practising |
+| 🟡 **S** | Blind pick, can carry |
+| 🟣 **A** | Strong, happy any game |
+| 🔵 **B** | Playable |
+| ⚪ **Willing to learn** | Will practise if needed |
+| ⚫ **Can't play** | Do not draft this |
+
+The last one earns its place: knowing what someone *cannot* play is as useful in
+a draft as knowing what they can.
 
 Paste comma-separated names into whichever boxes apply and submit. Whatever is
 left in the boxes becomes that role's pool, so adding, removing and moving a
@@ -154,8 +159,8 @@ Names are forgiving: `lee sin`, `leesin`, `LeeSin`, `asol`, `mf`, `j4` and
 `mundo` all resolve. Anything unrecognised is reported back rather than silently
 dropped.
 
-`/pool gaps` judges a roster on **Comfort** picks only, since those are the ones
-you can actually draft.
+`/pool gaps` judges a roster on **S and A** picks only, since those are the ones
+you can actually draft. `Can't play` entries never count towards coverage.
 
 ## The pinned command list
 

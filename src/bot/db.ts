@@ -88,8 +88,16 @@ db.exec(`
 // their champions and default to the middle tier.
 const poolColumns = db.prepare('PRAGMA table_info(pools)').all() as { name: string }[]
 if (!poolColumns.some((c) => c.name === 'confidence')) {
-  db.exec(`ALTER TABLE pools ADD COLUMN confidence TEXT NOT NULL DEFAULT 'Confident'`)
+  db.exec(`ALTER TABLE pools ADD COLUMN confidence TEXT NOT NULL DEFAULT 'B'`)
 }
+
+// The first version of tiers used words. Map them onto the letter grades.
+// Harmless to re-run: nothing matches once it has been done.
+db.exec(`
+  UPDATE pools SET confidence = 'S' WHERE confidence = 'Comfort';
+  UPDATE pools SET confidence = 'A' WHERE confidence = 'Confident';
+  UPDATE pools SET confidence = 'Willing to learn' WHERE confidence = 'Learning';
+`)
 
 export type Player = {
   discord_id: string

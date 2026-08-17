@@ -7,7 +7,7 @@ import {
   TextInputStyle,
   type ModalSubmitInteraction,
 } from 'discord.js'
-import { CONFIDENCE, CONFIDENCE_KEYS, POSITIONS, type Confidence } from '../config.js'
+import { CONFIDENCE, CONFIDENCE_KEYS, DRAFTABLE, POSITIONS, type Confidence } from '../config.js'
 import { pools, type PoolRow } from '../db.js'
 import { championIcon, parseChampionList } from '../ddragon.js'
 import { baseEmbed } from '../format.js'
@@ -23,7 +23,7 @@ export const pool: Command = {
     .addSubcommand((s) =>
       s
         .setName('edit')
-        .setDescription('Set your champions for a role, sorted by how confident you are')
+        .setDescription('Set your champions for a role, graded S to Can’t play')
         .addStringOption((o) =>
           o.setName('position').setDescription('Which role').setRequired(true).addChoices(...positionChoices),
         )
@@ -78,7 +78,7 @@ async function openEditor(i: Parameters<Command['execute']>[0]) {
     modal.addComponents(
       new ActionRowBuilder<TextInputBuilder>().addComponents(
         new TextInputBuilder()
-          .setCustomId(`tier-${tier.key}`)
+          .setCustomId(`tier-${tier.id}`)
           .setLabel(`${tier.key} — ${tier.hint}`.slice(0, 45))
           .setPlaceholder('Ahri, Syndra, Orianna — or leave blank')
           .setStyle(TextInputStyle.Short)
@@ -102,7 +102,7 @@ export async function handlePoolModal(i: ModalSubmitInteraction) {
 
   // Best tier wins if the same champion is typed into two boxes.
   for (const tier of CONFIDENCE) {
-    const parsed = parseChampionList(i.fields.getTextInputValue(`tier-${tier.key}`))
+    const parsed = parseChampionList(i.fields.getTextInputValue(`tier-${tier.id}`))
     unknown.push(...parsed.unknown)
     for (const champ of parsed.found) {
       if (claimed.has(champ.name)) continue
@@ -122,12 +122,10 @@ export async function handlePoolModal(i: ModalSubmitInteraction) {
   await i.editReply(lines.length ? `**${position}**\n${lines.join('\n')}` : 'Nothing changed.')
 }
 
-const MARK: Record<string, string> = { Comfort: '🟢', Confident: '🔵', Learning: '🟡' }
-
 function describe(rows: PoolRow[]): string {
   return CONFIDENCE.map((tier) => {
     const champs = rows.filter((r) => r.confidence === tier.key).map((r) => r.champion)
-    return champs.length ? `${MARK[tier.key]} **${tier.key}** — ${champs.join(', ')}` : null
+    return champs.length ? `${tier.mark} **${tier.key}** — ${champs.join(', ')}` : null
   })
     .filter(Boolean)
     .join('\n')
@@ -150,14 +148,14 @@ async function showPool(i: Parameters<Command['execute']>[0]) {
 
   const embed = baseEmbed()
     .setTitle(`${who.displayName}’s champion pool`)
-    .setDescription(CONFIDENCE.map((t) => `${MARK[t.key]} ${t.key} — *${t.hint}*`).join('\n'))
+    .setDescription(CONFIDENCE.map((t) => `${t.mark} ${t.key} — *${t.hint}*`).join('\n'))
 
   for (const position of POSITIONS) {
     const forPosition = rows.filter((r) => r.position === position)
     if (forPosition.length) embed.addFields({ name: position, value: describe(forPosition) })
   }
 
-  const best = rows.find((r) => r.confidence === 'Comfort') ?? rows[0]
+  const best = rows.find((r) => r.confidence === 'S') ?? rows[0]
   if (best) embed.setThumbnail(championIcon(best.champion))
   await i.reply({ embeds: [embed] })
 }
@@ -172,17 +170,26 @@ async function showGaps(i: Parameters<Command['execute']>[0]) {
 
   const embed = baseEmbed()
     .setTitle(`${key === 'a' ? 'A Team' : 'B Team'} — pool coverage`)
-    .setDescription('Judged on Comfort picks, since those are the ones you can actually draft.')
+    .setDescription('Judged on S and A picks, since those are the ones you can actually draft.')
 
   for (const position of POSITIONS) {
     const forPosition = rows.filter((r) => r.position === position)
-    const comfort = new Set(forPosition.filter((r) => r.confidence === 'Comfort').map((r) => r.champion))
-    const players = new Set(forPosition.map((r) => r.discord_id)).size
+    // "Can't play" entries are useful to know but must not count as coverage.
+    const usable = forPosition.filter((r) => r.confidence !== "Can't play")
+    const draftable = new Set(
+      forPosition.filter((r) => DRAFTABLE.includes(r.confidence as Confidence)).map((r) => r.champion),
+    )
+    const players = new Set(usable.map((r) => r.discord_id)).size
 
-    const verdict = players === 0 ? '⚠️ nobody' : comfort.size === 0 ? '⚠️ no comfort picks' : comfort.size < 3 ? '⚠️ thin' : '✅'
+    const verdict =
+      players === 0 ? '⚠️ nobody'
+      : draftable.size === 0 ? '⚠️ nothing S or A'
+      : draftable.size < 3 ? '⚠️ thin'
+      : '✅'
+
     embed.addFields({
       name: position,
-      value: `${verdict}\n${players} player${players === 1 ? '' : 's'} · ${comfort.size} comfort pick${comfort.size === 1 ? '' : 's'}`,
+      value: `${verdict}\n${players} player${players === 1 ? '' : 's'} · ${draftable.size} S/A pick${draftable.size === 1 ? '' : 's'}`,
       inline: true,
     })
   }
