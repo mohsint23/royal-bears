@@ -91,13 +91,6 @@ db.exec(`
   );
 `)
 
-// Pools gained a confidence column after the first release. Existing rows keep
-// their champions and default to the middle tier.
-const poolColumns = db.prepare('PRAGMA table_info(pools)').all() as { name: string }[]
-if (!poolColumns.some((c) => c.name === 'confidence')) {
-  db.exec(`ALTER TABLE pools ADD COLUMN confidence TEXT NOT NULL DEFAULT 'B'`)
-}
-
 // Accounts used to be one row per Discord user. Carry those across as mains.
 const hasOldPlayers = db
   .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'players'`)
@@ -110,13 +103,9 @@ if (hasOldPlayers) {
   `)
 }
 
-// The first version of tiers used words. Map them onto the letter grades.
-// Harmless to re-run: nothing matches once it has been done.
-db.exec(`
-  UPDATE pools SET confidence = 'S' WHERE confidence = 'Comfort';
-  UPDATE pools SET confidence = 'A' WHERE confidence = 'Confident';
-  UPDATE pools SET confidence = 'Willing to learn' WHERE confidence = 'Learning';
-`)
+// Pools used to be typed in and graded by tier. They are uploaded images now,
+// so the old table goes rather than sitting there confusing the next reader.
+db.exec('DROP TABLE IF EXISTS pools')
 
 export type Account = {
   puuid: string
