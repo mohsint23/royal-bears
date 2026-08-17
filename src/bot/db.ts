@@ -64,6 +64,16 @@ db.exec(`
     PRIMARY KEY (discord_id, position, champion)
   );
 
+  -- A tier-list screenshot standing in for, or alongside, the typed pool.
+  -- The file itself lives on disk; this is just the bookkeeping.
+  CREATE TABLE IF NOT EXISTS pool_images (
+    discord_id  TEXT NOT NULL,
+    position    TEXT NOT NULL,
+    file        TEXT NOT NULL,
+    uploaded_at INTEGER NOT NULL,
+    PRIMARY KEY (discord_id, position)
+  );
+
   CREATE TABLE IF NOT EXISTS scrims (
     message_id TEXT PRIMARY KEY,
     channel_id TEXT NOT NULL,
@@ -311,6 +321,28 @@ export const pools = {
 
     return { added, removed, moved }
   },
+}
+
+export type PoolImage = { discord_id: string; position: string; file: string; uploaded_at: number }
+
+/** The key used for an image that covers the whole pool rather than one role. */
+export const WHOLE_POOL = 'all'
+
+export const poolImages = {
+  forPlayer: (id: string) =>
+    db.prepare('SELECT * FROM pool_images WHERE discord_id = ? ORDER BY position').all(id) as PoolImage[],
+  get: (id: string, position: string) =>
+    db.prepare('SELECT * FROM pool_images WHERE discord_id = ? AND position = ?').get(id, position) as
+      | PoolImage
+      | undefined,
+  save: (id: string, position: string, file: string) =>
+    db.prepare(`
+      INSERT INTO pool_images (discord_id, position, file, uploaded_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(discord_id, position) DO UPDATE SET file = excluded.file, uploaded_at = excluded.uploaded_at
+    `).run(id, position, file, Date.now()),
+  remove: (id: string, position: string) =>
+    db.prepare('DELETE FROM pool_images WHERE discord_id = ? AND position = ?').run(id, position),
 }
 
 export const scrims = {

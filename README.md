@@ -122,7 +122,9 @@ Champion pools and scrims work with no key at all.
 | `/profile user: [account]` | anyone | Rank, form, most-played champions, last five games. Defaults to the main account |
 | `/team a\|b` | anyone | The roster at a glance, with a multi-search link |
 | `/multi a\|b` | anyone | Just the op.gg multi-search link for a roster |
-| `/pool edit `position:`` | anyone | Grade a role's champions S to Can't play |
+| `/pool upload image:` | anyone | Upload a tier list screenshot instead of typing |
+| `/pool edit `position:`` | anyone | Or type them in, graded S to Can't play |
+| `/pool unupload` | anyone | Delete an uploaded image |
 | `/pool view [user]` | anyone | Show a player's pool |
 | `/scrim when: team:` | staff | Posts a scrim with In / Maybe / Out buttons |
 | `/refresh` | staff | Pull everyone's latest games from Riot right now |
@@ -157,6 +159,23 @@ the rest are alts.
 `/profile account:` picks a specific account; leave it off for the main.
 
 ## Champion pools
+
+Two ways to record one, and a player can use either or both.
+
+### Uploading a tier list
+
+`/pool upload image:` takes a screenshot from a tier list maker and `/pool view`
+hands it straight back. Add `position:` if the image only covers one role;
+leave it off and it stands for the whole pool.
+
+Discord's attachment links are signed and expire within about a day, so storing
+the URL would leave every image broken by tomorrow. The file is copied onto disk
+beside the database instead — on Railway that means the mounted volume — and
+re-attached each time someone views the pool. Uploads are capped at 8 MB, limited
+to PNG, JPG, WEBP and GIF, and stored under a generated name so a hostile
+filename cannot escape the folder.
+
+### Typing it in
 
 `/pool edit position:Mid` opens five boxes, one per tier, pre-filled with what
 is already there:

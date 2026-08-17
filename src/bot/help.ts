@@ -5,27 +5,54 @@
 
 import { baseEmbed, GOLD } from './format.js'
 
-const EVERYONE = [
-  ['/register `riot-id:`', 'Link a Riot account. Do this first. Run it again to add a second account — up to five.'],
+const EVERYONE: readonly (readonly [string, string])[] = [
+  ['/register `riot-id:`', 'Link a Riot account. Do this first. Run it again to add another — up to five.'],
   ['/accounts list `user:`', 'See which accounts are linked and which is the main.'],
   ['/accounts main `account:`', 'Choose which account counts as your main.'],
   ['/accounts remove `account:`', 'Unlink an account.'],
-  ['/profile `[user]` `[account]`', 'Rank, form this week, most-played champions, last five games. Defaults to the main account.'],
+  ['/profile `user:` `[account]`', 'Rank, form this week, most-played champions, last five games. Pick yourself for your own.'],
   ['/team `a|b`', 'A whole roster at a glance, with a multi-search link.'],
   ['/multi `a|b`', 'Just the op.gg multi-search link for a roster.'],
-  ['/pool edit `position:`', 'Grade your champions for a role: S, A, B, Willing to learn, Can’t play. Paste comma-separated lists — whatever is left in the boxes becomes your pool.'],
-  ['/pool view `user:`', "Show someone's pool. Pick yourself for your own."],
+  ['/pool upload `image:`', 'Upload a tier list screenshot instead of typing anything. Add `position:` if it covers one role.'],
+  ['/pool edit `position:`', 'Or type it in: S, A, B, Willing to learn, Can’t play.'],
+  ['/pool unupload', 'Delete an uploaded image.'],
+  ['/pool view `user:`', 'Show a pool — the uploaded image, what they typed, or both.'],
   ['/help', 'This message.'],
-] as const
+]
 
-const STAFF = [
-  ['/scrim `when:` `team:` `[opponent:]`', 'Post a scrim with In / Maybe / Out buttons.'],
-  ['/refresh', "Pull everyone's latest games from Riot right now."],
+const STAFF: readonly (readonly [string, string])[] = [
+  ['/scrim `when:` `team:` `[opponent]`', 'Post a scrim with In / Maybe / Out buttons.'],
+  ['/refresh', 'Pull everyone’s latest games from Riot right now.'],
   ['/setkey', 'Paste a fresh Riot API key when the old one expires.'],
-] as const
+]
 
-const list = (rows: readonly (readonly [string, string])[]) =>
-  rows.map(([cmd, what]) => `**${cmd}**\n${what}`).join('\n\n')
+const FIELD_LIMIT = 1024
+
+/**
+ * Splits a command list across as many fields as it needs. Discord caps a field
+ * at 1024 characters and rejects the whole message if one goes over, so this
+ * cannot be left to chance as commands are added.
+ */
+function fields(title: string, rows: readonly (readonly [string, string])[]) {
+  const chunks: string[] = []
+  let current = ''
+
+  for (const [command, what] of rows) {
+    const entry = `**${command}**\n${what}`
+    if (current && current.length + entry.length + 2 > FIELD_LIMIT) {
+      chunks.push(current)
+      current = entry
+    } else {
+      current = current ? `${current}\n\n${entry}` : entry
+    }
+  }
+  if (current) chunks.push(current)
+
+  return chunks.map((value, index) => ({
+    name: index === 0 ? title : `${title} (continued)`,
+    value,
+  }))
+}
 
 export function helpEmbed() {
   return baseEmbed()
@@ -33,16 +60,16 @@ export function helpEmbed() {
     .setTitle('Royal Bears bot — what you can do')
     .setDescription(
       'Type `/` in any channel and Discord will suggest these as you go. ' +
-        'Options marked `like:this` are asked for automatically — the ones in `[brackets]` are optional. ' +
+        'Options written `like:this` are asked for automatically; `[brackets]` means optional. ' +
         'Most replies are only visible to you.',
     )
     .addFields(
-      { name: 'Everyone', value: list(EVERYONE) },
-      { name: 'Staff and captains', value: list(STAFF) },
+      ...fields('Everyone', EVERYONE),
+      ...fields('Staff and captains', STAFF),
       {
         name: 'Smurfs and second accounts',
         value:
-          'Link as many as five. The **main** is what `/team` and `/multi` use, and your rank role comes ' +
+          'Link up to five. The **main** is what `/team` and `/multi` use, and your rank role comes ' +
           'from your best account, not just the main one.',
       },
       {

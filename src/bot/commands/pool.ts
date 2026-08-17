@@ -1,5 +1,6 @@
 import {
   ActionRowBuilder,
+  AttachmentBuilder,
   MessageFlags,
   ModalBuilder,
   SlashCommandBuilder,
@@ -8,9 +9,10 @@ import {
   type ModalSubmitInteraction,
 } from 'discord.js'
 import { CONFIDENCE, CONFIDENCE_KEYS, POSITIONS, type Confidence } from '../config.js'
-import { pools, type PoolRow } from '../db.js'
+import { poolImages, pools, WHOLE_POOL, type PoolRow } from '../db.js'
 import { championIcon, parseChampionList } from '../ddragon.js'
 import { baseEmbed } from '../format.js'
+import { pathFor, removeImage, saveImage } from '../images.js'
 import { isStaff, rosterMembers, type TeamKey } from '../util.js'
 import type { Command } from './types.js'
 
@@ -31,6 +33,31 @@ export const pool: Command = {
     )
     .addSubcommand((s) =>
       s
+        .setName('upload')
+        .setDescription('Upload a tier list screenshot instead of typing your pool')
+        .addAttachmentOption((o) =>
+          o.setName('image').setDescription('Your tier list — PNG, JPG, WEBP or GIF').setRequired(true),
+        )
+        .addStringOption((o) =>
+          o
+            .setName('position')
+            .setDescription('Which role this covers. Leave off if it covers everything')
+            .addChoices(...positionChoices),
+        ),
+    )
+    .addSubcommand((s) =>
+      s
+        .setName('unupload')
+        .setDescription('Delete an uploaded tier list image')
+        .addStringOption((o) =>
+          o
+            .setName('position')
+            .setDescription('Which role. Leave off for the whole-pool image')
+            .addChoices(...positionChoices),
+        ),
+    )
+    .addSubcommand((s) =>
+      s
         .setName('view')
         .setDescription("Show a player's pool")
         .addUserOption((o) =>
@@ -41,6 +68,8 @@ export const pool: Command = {
   async execute(i) {
     const sub = i.options.getSubcommand()
     if (sub === 'edit') return openEditor(i)
+    if (sub === 'upload') return upload(i)
+    if (sub === 'unupload') return unupload(i)
     return showPool(i)
   },
 }
@@ -114,6 +143,34 @@ export async function handlePoolModal(i: ModalSubmitInteraction) {
   await i.editReply(lines.length ? `**${position}**\n${lines.join('\n')}` : 'Nothing changed.')
 }
 
+async function upload(i: Parameters<Command['execute']>[0]) {
+  const attachment = i.options.getAttachment('image', true)
+  const position = i.options.getString('position') ?? WHOLE_POOL
+
+  await i.deferReply({ flags: MessageFlags.Ephemeral })
+  const result = await saveImage(i.user.id, position, attachment)
+
+  if (!result.ok) {
+    await i.editReply(result.reason)
+    return
+  }
+  await i.editReply(
+    `Saved as ${position === WHOLE_POOL ? 'your whole pool' : `your **${position}** pool`}. ` +
+      'It shows up in `/pool view` from now on.',
+  )
+}
+
+async function unupload(i: Parameters<Command['execute']>[0]) {
+  const position = i.options.getString('position') ?? WHOLE_POOL
+  const removed = removeImage(i.user.id, position)
+  await i.reply({
+    content: removed
+      ? `Deleted the ${position === WHOLE_POOL ? 'whole-pool' : `**${position}**`} image.`
+      : 'There was no image saved there.',
+    flags: MessageFlags.Ephemeral,
+  })
+}
+
 const FIELD_LIMIT = 1024
 
 /** Trims a tier line at a champion boundary rather than mid-name. */
@@ -150,15 +207,26 @@ function describe(rows: PoolRow[]): string {
 async function showPool(i: Parameters<Command['execute']>[0]) {
   const who = i.options.getUser('user', true)
   const rows = pools.forPlayer(who.id)
+  const images = poolImages.forPlayer(who.id)
 
-  if (!rows.length) {
+  if (!rows.length && !images.length) {
     await i.reply({
       content:
         who.id === i.user.id
-          ? 'Your pool is empty. Fill it in with `/pool edit position:Mid`.'
+          ? 'Your pool is empty. Type it in with `/pool edit`, or upload a tier list with `/pool upload`.'
           : `${who} has not set a pool yet.`,
       flags: MessageFlags.Ephemeral,
     })
+    return
+  }
+
+  // An uploaded tier list is a pool on its own — there may be nothing typed.
+  if (!rows.length) {
+    const header = baseEmbed()
+      .setAuthor({ name: `${who.displayName} — champion pool`, iconURL: who.displayAvatarURL() })
+      .setDescription('Uploaded tier list.')
+    const { embeds, files } = withImages(who.id, header)
+    await i.reply({ embeds, files })
     return
   }
 
@@ -183,7 +251,34 @@ async function showPool(i: Parameters<Command['execute']>[0]) {
 
   const best = topPicks[0] ?? playable[0] ?? rows[0]
   if (best) embed.setThumbnail(championIcon(best.champion))
-  await i.reply({ embeds: [embed] })
+
+  const { embeds, files } = withImages(who.id, embed)
+  await i.reply({ embeds, files })
+}
+
+/**
+ * Attaches any uploaded tier lists. Discord allows one image per embed, so a
+ * player with several roles covered gets one embed each.
+ */
+function withImages(discordId: string, first: ReturnType<typeof baseEmbed>) {
+  const images = poolImages.forPlayer(discordId)
+  const files: AttachmentBuilder[] = []
+  const embeds: ReturnType<typeof baseEmbed>[] = [first]
+
+  // The whole-pool image belongs on the main embed; role images follow it.
+  const whole = images.find((img) => img.position === WHOLE_POOL)
+  const perRole = images.filter((img) => img.position !== WHOLE_POOL)
+
+  if (whole) {
+    files.push(new AttachmentBuilder(pathFor(whole.file), { name: whole.file }))
+    first.setImage(`attachment://${whole.file}`)
+  }
+  for (const image of perRole.slice(0, 9)) {
+    files.push(new AttachmentBuilder(pathFor(image.file), { name: image.file }))
+    embeds.push(baseEmbed().setTitle(image.position).setImage(`attachment://${image.file}`))
+  }
+
+  return { embeds, files }
 }
 
 export { CONFIDENCE_KEYS, type Confidence }
