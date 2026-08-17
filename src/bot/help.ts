@@ -12,7 +12,6 @@ const EVERYONE = [
   ['/multi `a|b`', 'Just the op.gg multi-search link for a roster.'],
   ['/pool edit `position:`', 'Grade your champions for a role: S, A, B, Willing to learn, Can’t play. Paste comma-separated lists — whatever is left in the boxes becomes your pool.'],
   ['/pool view `[user]`', "Show someone's pool."],
-  ['/pool gaps `a|b`', 'Where a roster is thin, judged on S and A picks.'],
   ['/help', 'This message.'],
 ] as const
 

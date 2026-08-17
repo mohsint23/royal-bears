@@ -49,18 +49,16 @@ export type Position = (typeof POSITIONS)[number]
  * contains spaces and an apostrophe.
  */
 export const CONFIDENCE = [
-  { key: 'S', id: 's', mark: '🟡', hint: 'blind pick, can carry' },
-  { key: 'A', id: 'a', mark: '🟣', hint: 'strong, happy any game' },
-  { key: 'B', id: 'b', mark: '🔵', hint: 'playable' },
-  { key: 'Willing to learn', id: 'learn', mark: '⚪', hint: 'will practise if needed' },
-  { key: "Can't play", id: 'cant', mark: '⚫', hint: 'do not draft this' },
+  { key: 'S', short: 'S', id: 's', mark: '🟡', hint: 'blind pick, can carry' },
+  { key: 'A', short: 'A', id: 'a', mark: '🟣', hint: 'strong, happy any game' },
+  { key: 'B', short: 'B', id: 'b', mark: '🔵', hint: 'playable' },
+  { key: 'Willing to learn', short: 'Learning', id: 'learn', mark: '⚪', hint: 'will practise if needed' },
+  { key: "Can't play", short: "Can't play", id: 'cant', mark: '⚫', hint: 'do not draft this' },
 ] as const
 export type Confidence = (typeof CONFIDENCE)[number]['key']
 export const CONFIDENCE_KEYS = CONFIDENCE.map((c) => c.key) as Confidence[]
 export const DEFAULT_CONFIDENCE: Confidence = 'B'
 
-/** Tiers a captain can actually draft from. */
-export const DRAFTABLE: Confidence[] = ['S', 'A']
 
 export const TIERS = [
   'IRON', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM',

@@ -243,13 +243,6 @@ export const pools = {
 
     return { added, removed, moved }
   },
-  forPlayers: (ids: string[]) => {
-    if (!ids.length) return []
-    const q = ids.map(() => '?').join(',')
-    return db
-      .prepare(`SELECT discord_id, position, champion, confidence FROM pools WHERE discord_id IN (${q})`)
-      .all(...ids) as (PoolRow & { discord_id: string })[]
-  },
 }
 
 export const scrims = {

@@ -7,7 +7,7 @@ import {
   TextInputStyle,
   type ModalSubmitInteraction,
 } from 'discord.js'
-import { CONFIDENCE, CONFIDENCE_KEYS, DRAFTABLE, POSITIONS, type Confidence } from '../config.js'
+import { CONFIDENCE, CONFIDENCE_KEYS, POSITIONS, type Confidence } from '../config.js'
 import { pools, type PoolRow } from '../db.js'
 import { championIcon, parseChampionList } from '../ddragon.js'
 import { baseEmbed } from '../format.js'
@@ -34,22 +34,12 @@ export const pool: Command = {
         .setName('view')
         .setDescription("Show a player's pool")
         .addUserOption((o) => o.setName('user').setDescription('Whose pool (defaults to you)')),
-    )
-    .addSubcommand((s) =>
-      s
-        .setName('gaps')
-        .setDescription('Where a roster is thin')
-        .addStringOption((o) =>
-          o.setName('team').setDescription('Which roster').setRequired(true)
-            .addChoices({ name: 'A Team', value: 'a' }, { name: 'B Team', value: 'b' }),
-        ),
     ),
 
   async execute(i) {
     const sub = i.options.getSubcommand()
     if (sub === 'edit') return openEditor(i)
-    if (sub === 'view') return showPool(i)
-    return showGaps(i)
+    return showPool(i)
   },
 }
 
@@ -122,13 +112,37 @@ export async function handlePoolModal(i: ModalSubmitInteraction) {
   await i.editReply(lines.length ? `**${position}**\n${lines.join('\n')}` : 'Nothing changed.')
 }
 
+const FIELD_LIMIT = 1024
+
+/** Trims a tier line at a champion boundary rather than mid-name. */
+function clamp(line: string, budget: number): string {
+  if (line.length <= budget) return line
+  const cut = line.lastIndexOf(', ', budget - 2)
+  return `${line.slice(0, cut > 0 ? cut : budget - 2)} …`
+}
+
+/**
+ * One line per tier that has anything in it, kept inside Discord's 1024
+ * character field limit — a pool big enough to overflow would otherwise make
+ * Discord reject the whole message.
+ */
 function describe(rows: PoolRow[]): string {
-  return CONFIDENCE.map((tier) => {
+  const lines: string[] = []
+  let used = 0
+
+  for (const tier of CONFIDENCE) {
     const champs = rows.filter((r) => r.confidence === tier.key).map((r) => r.champion)
-    return champs.length ? `${tier.mark} **${tier.key}** — ${champs.join(', ')}` : null
-  })
-    .filter(Boolean)
-    .join('\n')
+    if (!champs.length) continue
+
+    const line = `${tier.mark} **${tier.short}** ${champs.join(', ')}`
+    const budget = FIELD_LIMIT - used - 1
+    if (budget < 20) break
+
+    const trimmed = clamp(line, budget)
+    lines.push(trimmed)
+    used += trimmed.length + 1
+  }
+  return lines.join('\n')
 }
 
 async function showPool(i: Parameters<Command['execute']>[0]) {
@@ -146,58 +160,28 @@ async function showPool(i: Parameters<Command['execute']>[0]) {
     return
   }
 
-  const embed = baseEmbed()
-    .setTitle(`${who.displayName}’s champion pool`)
-    .setDescription(CONFIDENCE.map((t) => `${t.mark} ${t.key} — *${t.hint}*`).join('\n'))
+  const playable = rows.filter((r) => r.confidence !== "Can't play")
+  const roles = POSITIONS.filter((p) => rows.some((r) => r.position === p))
+  const topPicks = rows.filter((r) => r.confidence === 'S')
 
-  for (const position of POSITIONS) {
+  const embed = baseEmbed()
+    .setAuthor({ name: `${who.displayName} — champion pool`, iconURL: who.displayAvatarURL() })
+    .setDescription(
+      `**${playable.length}** champion${playable.length === 1 ? '' : 's'} across ` +
+        `**${roles.length}** role${roles.length === 1 ? '' : 's'}` +
+        (topPicks.length ? ` · **${topPicks.length}** at S` : ''),
+    )
+    // The legend lives down here in small grey text instead of eating the body.
+    .setFooter({ text: 'S blind pick · A strong · B playable · ○ learning · ● will not play' })
+
+  for (const position of roles) {
     const forPosition = rows.filter((r) => r.position === position)
-    if (forPosition.length) embed.addFields({ name: position, value: describe(forPosition) })
+    embed.addFields({ name: position.toUpperCase(), value: describe(forPosition) })
   }
 
-  const best = rows.find((r) => r.confidence === 'S') ?? rows[0]
+  const best = topPicks[0] ?? playable[0] ?? rows[0]
   if (best) embed.setThumbnail(championIcon(best.champion))
   await i.reply({ embeds: [embed] })
-}
-
-async function showGaps(i: Parameters<Command['execute']>[0]) {
-  if (!i.guild) return
-  await i.deferReply()
-
-  const key = i.options.getString('team', true) as TeamKey
-  const roster = await rosterMembers(i.guild, key)
-  const rows = pools.forPlayers(roster.map((m) => m.id))
-
-  const embed = baseEmbed()
-    .setTitle(`${key === 'a' ? 'A Team' : 'B Team'} — pool coverage`)
-    .setDescription('Judged on S and A picks, since those are the ones you can actually draft.')
-
-  for (const position of POSITIONS) {
-    const forPosition = rows.filter((r) => r.position === position)
-    // "Can't play" entries are useful to know but must not count as coverage.
-    const usable = forPosition.filter((r) => r.confidence !== "Can't play")
-    const draftable = new Set(
-      forPosition.filter((r) => DRAFTABLE.includes(r.confidence as Confidence)).map((r) => r.champion),
-    )
-    const players = new Set(usable.map((r) => r.discord_id)).size
-
-    const verdict =
-      players === 0 ? '⚠️ nobody'
-      : draftable.size === 0 ? '⚠️ nothing S or A'
-      : draftable.size < 3 ? '⚠️ thin'
-      : '✅'
-
-    embed.addFields({
-      name: position,
-      value: `${verdict}\n${players} player${players === 1 ? '' : 's'} · ${draftable.size} S/A pick${draftable.size === 1 ? '' : 's'}`,
-      inline: true,
-    })
-  }
-
-  const noPool = roster.filter((m) => !rows.some((r) => r.discord_id === m.id))
-  if (noPool.length) embed.addFields({ name: 'No pool set', value: noPool.map((m) => m.displayName).join(', ') })
-
-  await i.editReply({ embeds: [embed] })
 }
 
 export { CONFIDENCE_KEYS, type Confidence }

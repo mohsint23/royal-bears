@@ -123,7 +123,6 @@ Champion pools and scrims work with no key at all.
 | `/multi a\|b` | anyone | Just the op.gg multi-search link for a roster |
 | `/pool edit `position:`` | anyone | Grade a role's champions S to Can't play |
 | `/pool view [user]` | anyone | Show a player's pool |
-| `/pool gaps a\|b` | anyone | Which positions the roster is thin on |
 | `/scrim when: team:` | staff | Posts a scrim with In / Maybe / Out buttons |
 | `/refresh` | staff | Pull everyone's latest games from Riot right now |
 | `/help` | anyone | The command list, replied privately |
@@ -158,9 +157,6 @@ duplicated.
 Names are forgiving: `lee sin`, `leesin`, `LeeSin`, `asol`, `mf`, `j4` and
 `mundo` all resolve. Anything unrecognised is reported back rather than silently
 dropped.
-
-`/pool gaps` judges a roster on **S and A** picks only, since those are the ones
-you can actually draft. `Can't play` entries never count towards coverage.
 
 ## The pinned command list
 
