@@ -90,7 +90,95 @@ the `Tryout` role plus Staff and Coach — announce that tryouts are open in
 thread to post their op.gg and availability in, and you can discuss each one
 separately.
 
-## Still to come
+# The bot
 
-The tracker bot: `/register`, `/profile`, `/team`, `/multi`, `/pool`, `/scrim`,
-plus automatic rank roles and weekly stat roundups in `#stat-updates`.
+Run it locally:
+
+```bash
+npm install
+npm run bot        # or: npm run dev  (restarts when you edit a file)
+```
+
+## First run
+
+The bot works straight away, but anything using live Riot data needs a key.
+
+1. Go to <https://developer.riotgames.com>, sign in with your Riot account, and
+   copy the **Development API Key** from the front page.
+2. In Discord, run `/setkey` and paste it into the box that appears.
+
+Development keys expire every 24 hours. When one dies the bot stops polling,
+posts a notice in `#stat-updates` tagging Staff, and waits. Grab a fresh key and
+run `/setkey` again — nothing else needs restarting.
+
+Champion pools and scrims work with no key at all.
+
+## Commands
+
+| Command | Who | What it does |
+|---|---|---|
+| `/register riot-id:Name#TAG` | anyone | Links a Riot account. Staff can pass `user:` to register someone else |
+| `/profile [user]` | anyone | Rank, form, most-played champions, last five games, op.gg link |
+| `/team a\|b` | anyone | The roster at a glance, with a multi-search link |
+| `/multi a\|b` | anyone | Just the op.gg multi-search link for a roster |
+| `/pool add\|remove` | anyone | Manage your champion pool, with champion autocomplete |
+| `/pool view [user]` | anyone | Show a player's pool |
+| `/pool gaps a\|b` | anyone | Which positions the roster is thin on |
+| `/scrim when: team:` | staff | Posts a scrim with In / Maybe / Out buttons |
+| `/refresh` | staff | Pull everyone's latest games from Riot right now |
+| `/setkey` | staff | Paste a fresh Riot key |
+
+"Staff" means Staff, LoL Officer, either captain, Coach, or the server owner.
+
+## What it does on its own
+
+- **Every 30 minutes** it pulls each registered player's ranked standing and
+  recent games. A tier or division change gets posted to `#stat-updates`. Plain
+  LP movement is ignored, because nobody wants forty messages a day.
+- **Rank roles** are kept in step with solo queue. Nobody self-assigns those.
+- **Sundays at 18:00 UK time** it posts a weekly roundup: who played most, best
+  winrate over five or more games, the team's most-picked champions, and where
+  everyone currently sits.
+
+## How it is put together
+
+```
+src/bot/
+  index.ts        Wires everything up: commands, buttons, modals, jobs
+  config.ts       Environment and the role/tier names shared with setup.ts
+  db.ts           SQLite schema and every query the bot makes
+  riot.ts         Riot API client: rate limiting, retries, key expiry
+  ddragon.ts      Champion names and portraits from Riot's public CDN
+  format.ts       Embed styling, rank maths, op.gg links
+  sync.ts         Pulls a player's rank and games into the database
+  util.ts         Roster lookups, staff checks, Riot ID parsing
+  commands/       One file per slash command
+  jobs/           The 30-minute poll and the Sunday roundup
+```
+
+Rosters are read from Discord roles rather than stored in the database, so
+`A Team` and `B Team` in Discord are the only place membership is defined.
+
+## Deploying to Railway
+
+1. Push this repo to GitHub.
+2. In Railway: **New Project → Deploy from GitHub repo**.
+3. Add the environment variables from `.env` (`DISCORD_TOKEN`, `GUILD_ID`, and
+   the rest). Do not commit `.env` — it is gitignored for a reason.
+4. Add a **Volume** mounted at `/data`, then set `DATABASE_PATH=/data/royal-bears.db`.
+
+Without the volume the database is wiped on every deploy, and everyone would
+have to `/register` again.
+
+Railway runs `npm start`, which is already pointed at the bot.
+
+## Changing the server later
+
+Everything about the server's shape lives in `src/structure.ts` — role names,
+colours, channels, and who can see what. Edit that file and run `npm run setup`
+again.
+
+The script adds anything missing and re-applies permissions and topics to what
+is already there. It never deletes a channel or a role, so re-running is safe.
+Because it re-applies permissions, any overwrites you set by hand in Discord get
+reset to match the blueprint — change the blueprint, not the channel.

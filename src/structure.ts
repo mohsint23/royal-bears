@@ -185,7 +185,7 @@ export const CATEGORIES: CategoryDef[] = [
   },
   {
     name: '🎯 TRYOUTS',
-    viewableBy: [...TEAM_STAFF, ROLE.tryout],
+    viewableBy: [...TEAM_STAFF, ROLE.captainA, ROLE.captainB, ROLE.tryout],
     channels: [
       { name: 'tryout-info', type: 'text', readOnly: true, topic: 'What we are looking for and how the trial works' },
       { name: 'tryout-applications', type: 'forum', topic: 'One thread per applicant. Post your op.gg, roles, and availability' },
