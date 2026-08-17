@@ -1,10 +1,15 @@
 import {
+  ActionRowBuilder,
   MessageFlags,
+  ModalBuilder,
   SlashCommandBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  type ModalSubmitInteraction,
 } from 'discord.js'
 import { POSITIONS } from '../config.js'
 import { pools } from '../db.js'
-import { championIcon, resolveChampion, searchChampions } from '../ddragon.js'
+import { championIcon, parseChampionList, searchChampions } from '../ddragon.js'
 import { baseEmbed } from '../format.js'
 import { isStaff, rosterMembers, type TeamKey } from '../util.js'
 import type { Command } from './types.js'
@@ -17,10 +22,18 @@ export const pool: Command = {
     .setDescription('Champion pools for the team')
     .addSubcommand((s) =>
       s
+        .setName('edit')
+        .setDescription('Fill in your whole pool at once — all five roles in one box')
+        .addUserOption((o) => o.setName('user').setDescription('Edit someone else (staff only)')),
+    )
+    .addSubcommand((s) =>
+      s
         .setName('add')
         .setDescription('Add a champion to your pool')
         .addStringOption((o) => o.setName('position').setDescription('Which role').setRequired(true).addChoices(...positionChoices))
-        .addStringOption((o) => o.setName('champion').setDescription('Champion name').setRequired(true).setAutocomplete(true))
+        .addStringOption((o) =>
+          o.setName('champion').setDescription('One champion, or several separated by commas').setRequired(true).setAutocomplete(true),
+        )
         .addUserOption((o) => o.setName('user').setDescription('Add for someone else (staff only)')),
     )
     .addSubcommand((s) =>
@@ -49,7 +62,16 @@ export const pool: Command = {
 
   async autocomplete(i) {
     const typed = i.options.getFocused()
-    await i.respond(searchChampions(typed).map((c) => ({ name: c.name, value: c.name })))
+    // Complete only what is being typed after the last comma, so a list keeps growing.
+    const cut = typed.lastIndexOf(',')
+    const prefix = cut === -1 ? '' : typed.slice(0, cut + 1) + ' '
+    const tail = cut === -1 ? typed : typed.slice(cut + 1).trim()
+
+    await i.respond(
+      searchChampions(tail)
+        .map((c) => ({ name: `${prefix}${c.name}`.slice(0, 100), value: `${prefix}${c.name}`.slice(0, 100) }))
+        .slice(0, 25),
+    )
   },
 
   async execute(i) {
@@ -57,6 +79,7 @@ export const pool: Command = {
 
     if (sub === 'gaps') return showGaps(i)
     if (sub === 'view') return showPool(i)
+    if (sub === 'edit') return openEditor(i)
 
     const target = i.options.getUser('user')
     if (target && target.id !== i.user.id && !isStaff(i.member as never)) {
@@ -65,32 +88,106 @@ export const pool: Command = {
     }
     const who = target ?? i.user
     const position = i.options.getString('position', true)
-    const champ = resolveChampion(i.options.getString('champion', true))
+    const { found, unknown } = parseChampionList(i.options.getString('champion', true))
 
-    if (!champ) {
-      await i.reply({ content: 'I do not recognise that champion. Pick one from the suggestions.', flags: MessageFlags.Ephemeral })
-      return
-    }
-
-    if (sub === 'add') {
-      const result = pools.add(who.id, position, champ.name)
+    if (!found.length) {
       await i.reply({
-        content: result.changes
-          ? `Added **${champ.name}** to ${who.id === i.user.id ? 'your' : `${who}’s`} **${position}** pool.`
-          : `**${champ.name}** is already in that pool.`,
+        content: `I do not recognise ${unknown.map((u) => `**${u}**`).join(', ') || 'that'}. Pick from the suggestions as you type.`,
         flags: MessageFlags.Ephemeral,
       })
       return
     }
 
-    const result = pools.remove(who.id, position, champ.name)
-    await i.reply({
-      content: result.changes
-        ? `Removed **${champ.name}** from **${position}**.`
-        : `**${champ.name}** was not in that pool.`,
-      flags: MessageFlags.Ephemeral,
-    })
+    const changed: string[] = []
+    const skipped: string[] = []
+    for (const champ of found) {
+      const result = sub === 'add'
+        ? pools.add(who.id, position, champ.name)
+        : pools.remove(who.id, position, champ.name)
+      ;(result.changes ? changed : skipped).push(champ.name)
+    }
+
+    const whose = who.id === i.user.id ? 'your' : `${who}’s`
+    const parts: string[] = []
+    if (changed.length) {
+      parts.push(
+        sub === 'add'
+          ? `Added **${changed.join('**, **')}** to ${whose} **${position}** pool.`
+          : `Removed **${changed.join('**, **')}** from **${position}**.`,
+      )
+    }
+    if (skipped.length) {
+      parts.push(sub === 'add' ? `Already there: ${skipped.join(', ')}.` : `Not in the pool: ${skipped.join(', ')}.`)
+    }
+    if (unknown.length) parts.push(`Did not recognise: ${unknown.join(', ')}.`)
+
+    await i.reply({ content: parts.join('\n'), flags: MessageFlags.Ephemeral })
   },
+}
+
+export const POOL_MODAL = 'pool-edit'
+
+async function openEditor(i: Parameters<Command['execute']>[0]) {
+  const target = i.options.getUser('user')
+  if (target && target.id !== i.user.id && !isStaff(i.member as never)) {
+    await i.reply({ content: 'Only staff can edit someone else’s pool.', flags: MessageFlags.Ephemeral })
+    return
+  }
+  const who = target ?? i.user
+  const current = pools.forPlayer(who.id)
+
+  const modal = new ModalBuilder()
+    .setCustomId(`${POOL_MODAL}:${who.id}`)
+    .setTitle(who.id === i.user.id ? 'Your champion pool' : `${who.displayName}’s pool`)
+
+  for (const position of POSITIONS) {
+    const existing = current.filter((r) => r.position === position).map((r) => r.champion).join(', ')
+    modal.addComponents(
+      new ActionRowBuilder<TextInputBuilder>().addComponents(
+        new TextInputBuilder()
+          .setCustomId(`pool-${position}`)
+          .setLabel(position)
+          .setPlaceholder('Ahri, Syndra, Orianna — or leave blank')
+          .setStyle(TextInputStyle.Short)
+          .setValue(existing.slice(0, 4000))
+          .setRequired(false),
+      ),
+    )
+  }
+
+  await i.showModal(modal)
+}
+
+/** Applies the modal: whatever is in each box becomes that role's pool. */
+export async function handlePoolModal(i: ModalSubmitInteraction) {
+  await i.deferReply({ flags: MessageFlags.Ephemeral })
+
+  const targetId = i.customId.split(':')[1] ?? i.user.id
+  const lines: string[] = []
+  const unknownAll: string[] = []
+
+  for (const position of POSITIONS) {
+    const raw = i.fields.getTextInputValue(`pool-${position}`)
+    const { found, unknown } = parseChampionList(raw)
+    unknownAll.push(...unknown)
+
+    const { added, removed } = pools.replace(targetId, position, found.map((c) => c.name))
+    if (!added.length && !removed.length) continue
+
+    const bits: string[] = []
+    if (added.length) bits.push(`+ ${added.join(', ')}`)
+    if (removed.length) bits.push(`− ${removed.join(', ')}`)
+    lines.push(`**${position}** ${bits.join('  ')}`)
+  }
+
+  if (!lines.length && !unknownAll.length) {
+    await i.editReply('Nothing changed.')
+    return
+  }
+
+  const parts = [lines.length ? lines.join('\n') : 'Nothing changed.']
+  if (unknownAll.length) parts.push(`\nDid not recognise: ${unknownAll.join(', ')}`)
+  await i.editReply(parts.join('\n'))
 }
 
 async function showPool(i: Parameters<Command['execute']>[0]) {

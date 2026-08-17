@@ -201,6 +201,25 @@ export const pools = {
   remove: (id: string, position: string, champion: string) =>
     db.prepare('DELETE FROM pools WHERE discord_id = ? AND position = ? AND champion = ?')
       .run(id, position, champion),
+  /** Swaps a position's whole pool in one go. Returns what actually changed. */
+  replace(id: string, position: string, champions: string[]) {
+    const before = db
+      .prepare('SELECT champion FROM pools WHERE discord_id = ? AND position = ?')
+      .all(id, position) as { champion: string }[]
+    const had = new Set(before.map((r) => r.champion))
+    const want = new Set(champions)
+
+    const added = champions.filter((c) => !had.has(c))
+    const removed = [...had].filter((c) => !want.has(c))
+
+    db.transaction(() => {
+      db.prepare('DELETE FROM pools WHERE discord_id = ? AND position = ?').run(id, position)
+      const stmt = db.prepare('INSERT OR IGNORE INTO pools (discord_id, position, champion) VALUES (?, ?, ?)')
+      for (const champion of want) stmt.run(id, position, champion)
+    })()
+
+    return { added, removed }
+  },
   forPlayers: (ids: string[]) => {
     if (!ids.length) return []
     const q = ids.map(() => '?').join(',')

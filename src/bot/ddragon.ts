@@ -31,10 +31,50 @@ export async function loadChampions(force = false) {
   loadedAt = Date.now()
 }
 
-/** Turns loose user input ("leesin", "Lee Sin") into Riot's display name. */
+/** What people actually type in Discord. */
+const ALIASES: Record<string, string> = {
+  asol: 'aurelionsol', mf: 'missfortune', tf: 'twistedfate', j4: 'jarvaniv',
+  gp: 'gangplank', lb: 'leblanc', cait: 'caitlyn', morde: 'mordekaiser',
+  kass: 'kassadin', malz: 'malzahar', sej: 'sejuani', seju: 'sejuani',
+  yi: 'masteryi', blitz: 'blitzcrank', ez: 'ezreal', kha: 'khazix',
+  rek: 'reksai', vel: 'velkoz', cho: 'chogath', heca: 'hecarim',
+  eve: 'evelynn', panth: 'pantheon', xin: 'xinzhao', ori: 'orianna',
+  mundo: 'drmundo', ali: 'alistar', naut: 'nautilus', kata: 'katarina',
+  kog: 'kogmaw', ww: 'warwick', voli: 'volibear', trund: 'trundle',
+  yorick: 'yorick', tk: 'tahmkench', nid: 'nidalee', vlad: 'vladimir',
+  aphe: 'aphelios', apheli: 'aphelios', ksante: 'ksante', kaisa: 'kaisa',
+  cass: 'cassiopeia', trist: 'tristana', lulu: 'lulu', soraka: 'soraka',
+  jarvan: 'jarvaniv', renek: 'renekton', nasus: 'nasus', wu: 'wukong',
+  mumu: 'amumu', ez4: 'ezreal', vik: 'viktor', zil: 'zilean',
+}
+
+/** Turns loose user input ("leesin", "Lee Sin", "asol") into Riot's display name. */
 export function resolveChampion(input: string): { id: string; name: string } | undefined {
   const cleaned = input.trim().toLowerCase()
-  return champions.get(cleaned) ?? champions.get(cleaned.replace(/[^a-z]/g, ''))
+  const stripped = cleaned.replace(/[^a-z0-9]/g, '')
+  return (
+    champions.get(cleaned) ??
+    champions.get(stripped) ??
+    (ALIASES[stripped] ? champions.get(ALIASES[stripped]!) : undefined)
+  )
+}
+
+/** Splits a pasted list — commas, newlines, or both — into champion names. */
+export function parseChampionList(input: string): { found: { id: string; name: string }[]; unknown: string[] } {
+  const found: { id: string; name: string }[] = []
+  const unknown: string[] = []
+  const seen = new Set<string>()
+
+  for (const piece of input.split(/[,\n]/)) {
+    const raw = piece.trim()
+    if (!raw) continue
+    const champ = resolveChampion(raw)
+    if (!champ) { unknown.push(raw); continue }
+    if (seen.has(champ.id)) continue
+    seen.add(champ.id)
+    found.push(champ)
+  }
+  return { found, unknown }
 }
 
 export function championIcon(idOrName: string): string {
