@@ -57,13 +57,6 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS matches_by_player ON matches (puuid, played_at DESC);
 
-  CREATE TABLE IF NOT EXISTS pools (
-    discord_id TEXT NOT NULL,
-    position   TEXT NOT NULL,
-    champion   TEXT NOT NULL,
-    PRIMARY KEY (discord_id, position, champion)
-  );
-
   -- A tier-list screenshot standing in for, or alongside, the typed pool.
   -- The file itself lives on disk; this is just the bookkeeping.
   CREATE TABLE IF NOT EXISTS pool_images (
@@ -282,45 +275,6 @@ export const matches = {
     db
       .prepare('SELECT * FROM matches WHERE puuid = ? ORDER BY played_at DESC LIMIT ?')
       .all(puuid, limit) as MatchRow[],
-}
-
-export type PoolRow = { position: string; champion: string; confidence: string }
-
-export const pools = {
-  forPlayer: (id: string) =>
-    db.prepare('SELECT position, champion, confidence FROM pools WHERE discord_id = ? ORDER BY position, champion')
-      .all(id) as PoolRow[],
-  /**
-   * Swaps a position's whole pool in one go, tiers included. Returns what
-   * actually changed so the reply can say so rather than just "done".
-   */
-  replace(id: string, position: string, entries: { champion: string; confidence: string }[]) {
-    const before = db
-      .prepare('SELECT champion, confidence FROM pools WHERE discord_id = ? AND position = ?')
-      .all(id, position) as { champion: string; confidence: string }[]
-
-    const had = new Map(before.map((r) => [r.champion, r.confidence]))
-    const want = new Map(entries.map((e) => [e.champion, e.confidence]))
-
-    const added: string[] = []
-    const moved: { champion: string; from: string; to: string }[] = []
-    for (const [champion, confidence] of want) {
-      const previous = had.get(champion)
-      if (previous === undefined) added.push(champion)
-      else if (previous !== confidence) moved.push({ champion, from: previous, to: confidence })
-    }
-    const removed = [...had.keys()].filter((c) => !want.has(c))
-
-    db.transaction(() => {
-      db.prepare('DELETE FROM pools WHERE discord_id = ? AND position = ?').run(id, position)
-      const stmt = db.prepare(
-        'INSERT OR IGNORE INTO pools (discord_id, position, champion, confidence) VALUES (?, ?, ?, ?)',
-      )
-      for (const [champion, confidence] of want) stmt.run(id, position, champion, confidence)
-    })()
-
-    return { added, removed, moved }
-  },
 }
 
 export type PoolImage = { discord_id: string; position: string; file: string; uploaded_at: number }

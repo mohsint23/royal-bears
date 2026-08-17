@@ -17,7 +17,6 @@ import {
 import { config } from './config.js'
 import { byName, commands } from './commands/index.js'
 import { handleSetKeyModal, SETKEY_MODAL } from './commands/setkey.js'
-import { handlePoolModal, POOL_MODAL } from './commands/pool.js'
 import { handleScrimButton, isScrimButton } from './commands/scrim.js'
 import { loadChampions } from './ddragon.js'
 import { hasKey } from './riot.js'
@@ -58,7 +57,6 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     }
     if (interaction.isModalSubmit()) {
       if (interaction.customId === SETKEY_MODAL) await handleSetKeyModal(interaction)
-      else if (interaction.customId.startsWith(`${POOL_MODAL}:`)) await handlePoolModal(interaction)
       return
     }
     if (interaction.isButton()) {

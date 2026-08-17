@@ -42,24 +42,6 @@ export const STAFF_ROLES: string[] = [
 export const POSITIONS = ['Top', 'Jungle', 'Mid', 'ADC', 'Support'] as const
 export type Position = (typeof POSITIONS)[number]
 
-/**
- * How sure a player is on a champion, best first.
- *
- * `id` is the modal input's customId, kept to plain letters because `key`
- * contains spaces and an apostrophe.
- */
-export const CONFIDENCE = [
-  { key: 'S', short: 'S', id: 's', mark: '🟡', hint: 'blind pick, can carry' },
-  { key: 'A', short: 'A', id: 'a', mark: '🟣', hint: 'strong, happy any game' },
-  { key: 'B', short: 'B', id: 'b', mark: '🔵', hint: 'playable' },
-  { key: 'Willing to learn', short: 'Learning', id: 'learn', mark: '⚪', hint: 'will practise if needed' },
-  { key: "Can't play", short: "Can't play", id: 'cant', mark: '⚫', hint: 'do not draft this' },
-] as const
-export type Confidence = (typeof CONFIDENCE)[number]['key']
-export const CONFIDENCE_KEYS = CONFIDENCE.map((c) => c.key) as Confidence[]
-export const DEFAULT_CONFIDENCE: Confidence = 'B'
-
-
 export const TIERS = [
   'IRON', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM',
   'EMERALD', 'DIAMOND', 'MASTER', 'GRANDMASTER', 'CHALLENGER',

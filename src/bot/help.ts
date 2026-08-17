@@ -13,10 +13,9 @@ const EVERYONE: readonly (readonly [string, string])[] = [
   ['/profile `user:` `[account]`', 'Rank, form this week, most-played champions, last five games. Pick yourself for your own.'],
   ['/team `a|b`', 'A whole roster at a glance, with a multi-search link.'],
   ['/multi `a|b`', 'Just the op.gg multi-search link for a roster.'],
-  ['/pool upload `image:`', 'Upload a tier list screenshot instead of typing anything. Add `position:` if it covers one role.'],
-  ['/pool edit `position:`', 'Or type it in: S, A, B, Willing to learn, Can’t play.'],
-  ['/pool unupload', 'Delete an uploaded image.'],
-  ['/pool view `user:`', 'Show a pool — the uploaded image, what they typed, or both.'],
+  ['/pool upload `image:`', 'Upload your tier list. Add `position:` if it only covers one role.'],
+  ['/pool view `user:`', 'Show a player’s tier list.'],
+  ['/pool remove', 'Delete one of your tier lists.'],
   ['/help', 'This message.'],
 ]
 

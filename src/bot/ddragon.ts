@@ -59,40 +59,7 @@ export function resolveChampion(input: string): { id: string; name: string } | u
   )
 }
 
-/** Splits a pasted list — commas, newlines, or both — into champion names. */
-export function parseChampionList(input: string): { found: { id: string; name: string }[]; unknown: string[] } {
-  const found: { id: string; name: string }[] = []
-  const unknown: string[] = []
-  const seen = new Set<string>()
-
-  for (const piece of input.split(/[,\n]/)) {
-    const raw = piece.trim()
-    if (!raw) continue
-    const champ = resolveChampion(raw)
-    if (!champ) { unknown.push(raw); continue }
-    if (seen.has(champ.id)) continue
-    seen.add(champ.id)
-    found.push(champ)
-  }
-  return { found, unknown }
-}
-
 export function championIcon(idOrName: string): string {
   const champ = resolveChampion(idOrName)
   return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${champ?.id ?? idOrName}.png`
-}
-
-/** Autocomplete source: up to 25 champions matching what has been typed. */
-export function searchChampions(query: string): { id: string; name: string }[] {
-  const q = query.trim().toLowerCase()
-  const seen = new Set<string>()
-  const out: { id: string; name: string }[] = []
-  for (const champ of champions.values()) {
-    if (seen.has(champ.id)) continue
-    if (q && !champ.name.toLowerCase().includes(q)) continue
-    seen.add(champ.id)
-    out.push(champ)
-    if (out.length >= 25) break
-  }
-  return out.sort((a, b) => a.name.localeCompare(b.name))
 }
