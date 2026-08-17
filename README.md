@@ -121,8 +121,7 @@ Champion pools and scrims work with no key at all.
 | `/profile [user]` | anyone | Rank, form, most-played champions, last five games, op.gg link |
 | `/team a\|b` | anyone | The roster at a glance, with a multi-search link |
 | `/multi a\|b` | anyone | Just the op.gg multi-search link for a roster |
-| `/pool edit` | anyone | Opens a box with all five roles at once — the fast way to fill a pool |
-| `/pool add\|remove` | anyone | One champion, or several separated by commas |
+| `/pool edit `position:`` | anyone | Set a role's champions, sorted into confidence tiers |
 | `/pool view [user]` | anyone | Show a player's pool |
 | `/pool gaps a\|b` | anyone | Which positions the roster is thin on |
 | `/scrim when: team:` | staff | Posts a scrim with In / Maybe / Out buttons |
@@ -134,16 +133,29 @@ Champion pools and scrims work with no key at all.
 
 ## Champion pools
 
-`/pool edit` opens a box with one line per role, pre-filled with what is already
-there. Type or paste comma-separated names, submit, and that becomes the pool —
-adding and removing in a single step.
+`/pool edit position:Mid` opens three boxes, one per confidence tier, pre-filled
+with what is already there:
+
+| Tier | Means |
+|---|---|
+| 🟢 **Comfort** | Blind pick, any game |
+| 🔵 **Confident** | Happy to play |
+| 🟡 **Learning** | Still practising |
+
+Paste comma-separated names into whichever boxes apply and submit. Whatever is
+left in the boxes becomes that role's pool, so adding, removing and moving a
+champion between tiers all happen in one step. The reply says exactly what
+changed, including promotions and demotions.
+
+A champion typed into two boxes lands in the better one rather than being
+duplicated.
 
 Names are forgiving: `lee sin`, `leesin`, `LeeSin`, `asol`, `mf`, `j4` and
 `mundo` all resolve. Anything unrecognised is reported back rather than silently
 dropped.
 
-`/pool add` also takes a list, so `champion:Ahri, Syndra, Orianna` works, and
-autocomplete keeps suggesting as you extend it.
+`/pool gaps` judges a roster on **Comfort** picks only, since those are the ones
+you can actually draft.
 
 ## The pinned command list
 

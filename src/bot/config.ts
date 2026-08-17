@@ -42,6 +42,16 @@ export const STAFF_ROLES: string[] = [
 export const POSITIONS = ['Top', 'Jungle', 'Mid', 'ADC', 'Support'] as const
 export type Position = (typeof POSITIONS)[number]
 
+/** How sure a player is on a champion, best first. */
+export const CONFIDENCE = [
+  { key: 'Comfort', hint: 'blind pick, any game' },
+  { key: 'Confident', hint: 'happy to play' },
+  { key: 'Learning', hint: 'still practising' },
+] as const
+export type Confidence = (typeof CONFIDENCE)[number]['key']
+export const CONFIDENCE_KEYS = CONFIDENCE.map((c) => c.key) as Confidence[]
+export const DEFAULT_CONFIDENCE: Confidence = 'Confident'
+
 export const TIERS = [
   'IRON', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM',
   'EMERALD', 'DIAMOND', 'MASTER', 'GRANDMASTER', 'CHALLENGER',

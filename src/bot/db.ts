@@ -84,6 +84,13 @@ db.exec(`
   );
 `)
 
+// Pools gained a confidence column after the first release. Existing rows keep
+// their champions and default to the middle tier.
+const poolColumns = db.prepare('PRAGMA table_info(pools)').all() as { name: string }[]
+if (!poolColumns.some((c) => c.name === 'confidence')) {
+  db.exec(`ALTER TABLE pools ADD COLUMN confidence TEXT NOT NULL DEFAULT 'Confident'`)
+}
+
 export type Player = {
   discord_id: string
   puuid: string
@@ -191,41 +198,49 @@ export const matches = {
       .all(puuid, limit) as MatchRow[],
 }
 
+export type PoolRow = { position: string; champion: string; confidence: string }
+
 export const pools = {
   forPlayer: (id: string) =>
-    db.prepare('SELECT position, champion FROM pools WHERE discord_id = ? ORDER BY position, champion')
-      .all(id) as { position: string; champion: string }[],
-  add: (id: string, position: string, champion: string) =>
-    db.prepare('INSERT OR IGNORE INTO pools (discord_id, position, champion) VALUES (?, ?, ?)')
-      .run(id, position, champion),
-  remove: (id: string, position: string, champion: string) =>
-    db.prepare('DELETE FROM pools WHERE discord_id = ? AND position = ? AND champion = ?')
-      .run(id, position, champion),
-  /** Swaps a position's whole pool in one go. Returns what actually changed. */
-  replace(id: string, position: string, champions: string[]) {
+    db.prepare('SELECT position, champion, confidence FROM pools WHERE discord_id = ? ORDER BY position, champion')
+      .all(id) as PoolRow[],
+  /**
+   * Swaps a position's whole pool in one go, tiers included. Returns what
+   * actually changed so the reply can say so rather than just "done".
+   */
+  replace(id: string, position: string, entries: { champion: string; confidence: string }[]) {
     const before = db
-      .prepare('SELECT champion FROM pools WHERE discord_id = ? AND position = ?')
-      .all(id, position) as { champion: string }[]
-    const had = new Set(before.map((r) => r.champion))
-    const want = new Set(champions)
+      .prepare('SELECT champion, confidence FROM pools WHERE discord_id = ? AND position = ?')
+      .all(id, position) as { champion: string; confidence: string }[]
 
-    const added = champions.filter((c) => !had.has(c))
-    const removed = [...had].filter((c) => !want.has(c))
+    const had = new Map(before.map((r) => [r.champion, r.confidence]))
+    const want = new Map(entries.map((e) => [e.champion, e.confidence]))
+
+    const added: string[] = []
+    const moved: { champion: string; from: string; to: string }[] = []
+    for (const [champion, confidence] of want) {
+      const previous = had.get(champion)
+      if (previous === undefined) added.push(champion)
+      else if (previous !== confidence) moved.push({ champion, from: previous, to: confidence })
+    }
+    const removed = [...had.keys()].filter((c) => !want.has(c))
 
     db.transaction(() => {
       db.prepare('DELETE FROM pools WHERE discord_id = ? AND position = ?').run(id, position)
-      const stmt = db.prepare('INSERT OR IGNORE INTO pools (discord_id, position, champion) VALUES (?, ?, ?)')
-      for (const champion of want) stmt.run(id, position, champion)
+      const stmt = db.prepare(
+        'INSERT OR IGNORE INTO pools (discord_id, position, champion, confidence) VALUES (?, ?, ?, ?)',
+      )
+      for (const [champion, confidence] of want) stmt.run(id, position, champion, confidence)
     })()
 
-    return { added, removed }
+    return { added, removed, moved }
   },
   forPlayers: (ids: string[]) => {
     if (!ids.length) return []
     const q = ids.map(() => '?').join(',')
     return db
-      .prepare(`SELECT discord_id, position, champion FROM pools WHERE discord_id IN (${q})`)
-      .all(...ids) as { discord_id: string; position: string; champion: string }[]
+      .prepare(`SELECT discord_id, position, champion, confidence FROM pools WHERE discord_id IN (${q})`)
+      .all(...ids) as (PoolRow & { discord_id: string })[]
   },
 }
 

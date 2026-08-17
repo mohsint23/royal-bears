@@ -10,11 +10,9 @@ const EVERYONE = [
   ['/profile `[user]`', 'Rank, form this week, most-played champions, last five games, op.gg link.'],
   ['/team `a|b`', 'A whole roster at a glance, with a multi-search link.'],
   ['/multi `a|b`', 'Just the op.gg multi-search link for a roster.'],
-  ['/pool edit', 'Fill in your whole pool — all five roles in one box. The fastest way.'],
-  ['/pool add `position:` `champion:`', 'Add one champion, or several separated by commas.'],
-  ['/pool remove `position:` `champion:`', 'Take them back out. Commas work here too.'],
+  ['/pool edit `position:`', 'Set your champions for a role, split into Comfort, Confident and Learning. Paste comma-separated lists — whatever you leave in the boxes becomes your pool.'],
   ['/pool view `[user]`', "Show someone's pool."],
-  ['/pool gaps `a|b`', 'Where a roster is thin on champions.'],
+  ['/pool gaps `a|b`', 'Where a roster is thin, judged on Comfort picks.'],
   ['/help', 'This message.'],
 ] as const
 
