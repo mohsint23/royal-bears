@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js'
 import { QUEUE } from '../config.js'
 import { accounts, matches, ranks } from '../db.js'
+import { championDisplay } from '../ddragon.js'
 import { baseEmbed, opggMultiLink, rankLabel, topChampions, winrate } from '../format.js'
 import { rosterMembers, type TeamKey } from '../util.js'
 import type { Command } from './types.js'
@@ -53,7 +54,7 @@ export const team: Command = {
           (week.length
             ? ` · ${winrate(week.filter((m) => m.win).length, week.filter((m) => !m.win).length)}`
             : '') +
-          (champs.length ? `\n ${champs.map((c) => `${c.champion} (${c.games})`).join(', ')}` : ''),
+          (champs.length ? `\n ${champs.map((c) => `${championDisplay(c.champion)} (${c.games})`).join(', ')}` : ''),
       )
     }
 

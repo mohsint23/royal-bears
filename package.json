@@ -10,7 +10,8 @@
     "start": "tsx src/bot/index.ts",
     "typecheck": "tsc --noEmit -p .",
     "post-help": "tsx src/postHelp.ts",
-    "set-avatar": "tsx src/setAvatar.ts"
+    "set-avatar": "tsx src/setAvatar.ts",
+    "preview": "tsx src/preview.ts"
   },
   "dependencies": {
     "discord.js": "^14.16.3",

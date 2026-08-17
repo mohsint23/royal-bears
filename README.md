@@ -174,6 +174,17 @@ re-attached each time someone views it. Uploads are capped at 8 MB, limited to
 PNG, JPG, WEBP and GIF, and stored under a generated name so a hostile filename
 cannot escape the folder.
 
+## Looking at embeds before sending them
+
+```bash
+npm run preview      # http://127.0.0.1:7333
+```
+
+Renders the profile embeds against whatever is in the database, laid out the way
+Discord lays them out. Embed design is fiddly — inline fields wrap, code blocks
+are the only way to align columns — and this beats posting draft after draft
+into the team's channels to see what a change did.
+
 ## The pinned command list
 
 ```bash

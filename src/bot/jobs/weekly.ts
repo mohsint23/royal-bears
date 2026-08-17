@@ -6,7 +6,7 @@
 import type { Client, Guild } from 'discord.js'
 import { config, QUEUE } from '../config.js'
 import { accounts, matches, ranks, settings } from '../db.js'
-import { championIcon } from '../ddragon.js'
+import { championDisplay, championIcon } from '../ddragon.js'
 import { baseEmbed, GOLD, rankLabel, rankScore, topChampions, winrate } from '../format.js'
 import { statChannel } from './announce.js'
 
@@ -103,7 +103,7 @@ export async function postWeekly(guild: Guild) {
     embed.setThumbnail(championIcon(champs[0]!.champion))
     embed.addFields({
       name: 'Team’s most picked',
-      value: champs.map((c) => `**${c.champion}** — ${c.games} games`).join('\n'),
+      value: champs.map((c) => `**${championDisplay(c.champion)}** — ${c.games} games`).join('\n'),
     })
   }
 

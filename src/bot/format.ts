@@ -36,6 +36,13 @@ export function rankLabel(r: Pick<RankRow, 'tier' | 'division' | 'lp'> | undefin
   return apex ? `${name} ${r.lp} LP` : `${name} ${r.division} · ${r.lp} LP`
 }
 
+/** Tier and division only. Flex LP is noise next to solo queue. */
+export function rankShort(r: Pick<RankRow, 'tier' | 'division'> | undefined): string {
+  if (!r?.tier) return 'Unranked'
+  const apex = r.tier === 'MASTER' || r.tier === 'GRANDMASTER' || r.tier === 'CHALLENGER'
+  return apex ? TITLE_CASE(r.tier) : `${TITLE_CASE(r.tier)} ${r.division}`
+}
+
 export function tierColour(tier: string | null | undefined): number {
   switch (tier) {
     case 'CHALLENGER': return 0xf0d078
@@ -56,6 +63,27 @@ export function winrate(wins: number, losses: number): string {
   const total = wins + losses
   if (!total) return '—'
   return `${Math.round((wins / total) * 100)}% (${wins}W ${losses}L)`
+}
+
+/** Just the percentage, for places where the W/L breakdown would crowd. */
+export function winratePct(wins: number, losses: number): string {
+  const total = wins + losses
+  return total ? `${Math.round((wins / total) * 100)}%` : '—'
+}
+
+/** Pads a row into fixed columns. Only meaningful inside a code block. */
+export function columns(rows: string[][], widths: number[]): string {
+  return rows
+    .map((row) =>
+      row
+        .map((cell, i) => {
+          const width = widths[i]!
+          return width < 0 ? cell.padStart(-width) : cell.slice(0, width).padEnd(width)
+        })
+        .join(' ')
+        .trimEnd(),
+    )
+    .join('\n')
 }
 
 export function kda(m: Pick<MatchRow, 'kills' | 'deaths' | 'assists'>): string {

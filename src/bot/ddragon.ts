@@ -59,6 +59,14 @@ export function resolveChampion(input: string): { id: string; name: string } | u
   )
 }
 
+/**
+ * Riot's match data uses internal ids — MonkeyKing for Wukong, Fiddlesticks
+ * spelled differently across endpoints. This gives the name players know.
+ */
+export function championDisplay(idOrName: string): string {
+  return resolveChampion(idOrName)?.name ?? idOrName
+}
+
 export function championIcon(idOrName: string): string {
   const champ = resolveChampion(idOrName)
   return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${champ?.id ?? idOrName}.png`
