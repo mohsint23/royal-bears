@@ -14,6 +14,7 @@
     "post-welcome": "tsx src/postWelcome.ts",
     "post-tryouts": "tsx src/postTryouts.ts",
     "attendance": "tsx src/runAttendance.ts",
+    "patch-notes": "tsx src/postPatch.ts",
     "set-avatar": "tsx src/setAvatar.ts",
     "set-server-icon": "tsx src/setServerIcon.ts",
     "preview": "tsx src/preview.ts"

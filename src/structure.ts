@@ -167,6 +167,7 @@ export const CATEGORIES: CategoryDef[] = [
       { name: 'welcome', type: 'text', readOnly: true, topic: 'Start here — what Royal Bears is and how this server works' },
       { name: 'announcements', type: 'text', readOnly: true, topic: 'Tryouts, fixtures, socials. Everything you actually need to read' },
       { name: 'get-roles', type: 'text', readOnly: true, topic: 'Pick your position. Rank roles are handled by the bot' },
+      { name: 'patch-notes', type: 'text', readOnly: true, topic: 'Every League patch, posted by the bot when it goes live' },
     ],
   },
   {

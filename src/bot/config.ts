@@ -18,6 +18,7 @@ export const config = {
   opggRegion: process.env.OPGG_REGION || 'euw',
   statChannel: process.env.STAT_CHANNEL || 'stat-updates',
   attendanceChannel: process.env.ATTENDANCE_CHANNEL || 'attendance',
+  patchChannel: process.env.PATCH_CHANNEL || 'patch-notes',
   databasePath: process.env.DATABASE_PATH || './data/royal-bears.db',
 }
 
