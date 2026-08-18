@@ -19,6 +19,7 @@ export const ROLE = {
   sub: 'Sub',
   tryout: 'Tryout',
   member: 'Member',
+  bots: 'Bots',
 } as const
 
 export type RoleDef = {
@@ -98,7 +99,10 @@ export const ROLES: RoleDef[] = [
   { name: ROLE.bTeam, color: 0x6b94e8, hoist: true, mentionable: true },
   { name: ROLE.sub, color: 0x8fa8c8, hoist: true, mentionable: true },
   { name: ROLE.tryout, color: 0x9aa0a6, hoist: true, mentionable: true },
-  { name: ROLE.member, mentionable: true },
+  // Hoisted so ordinary members form a group of their own. Without it they land
+  // in the ungrouped bucket, which Discord draws below every hoisted role —
+  // including the bots.
+  { name: ROLE.member, hoist: true, mentionable: true },
 
   // Assigned automatically by the bot later, from Riot data.
   { name: 'Challenger', color: 0xf0d078 },
@@ -118,6 +122,9 @@ export const ROLES: RoleDef[] = [
   { name: 'Mid', mentionable: true },
   { name: 'ADC', mentionable: true },
   { name: 'Support', mentionable: true },
+
+  // Last on purpose: lowest hoisted role, so bots sit under every human group.
+  { name: ROLE.bots, color: 0x5865f2, hoist: true },
 ]
 
 /** Server-wide settings applied by the setup script. */
@@ -167,7 +174,7 @@ export const CATEGORIES: CategoryDef[] = [
       { name: 'welcome', type: 'text', readOnly: true, topic: 'Start here — what Royal Bears is and how this server works' },
       { name: 'announcements', type: 'text', readOnly: true, topic: 'Tryouts, fixtures, socials. Everything you actually need to read' },
       { name: 'get-roles', type: 'text', readOnly: true, topic: 'Pick your position. Rank roles are handled by the bot' },
-      { name: 'patch-notes', type: 'text', readOnly: true, topic: 'Every League patch, posted by the bot when it goes live' },
+      { name: 'patch-notes', type: 'text', readOnly: true, topic: 'Every League patch, posted automatically by PatchBot' },
     ],
   },
   {

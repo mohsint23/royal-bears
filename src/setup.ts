@@ -41,6 +41,24 @@ async function ensureRoles(guild: Guild): Promise<Map<string, Role>> {
   for (const def of ROLES) {
     const existing = guild.roles.cache.find((r) => r.name === def.name && !r.managed)
     if (existing) {
+      // Re-apply the look of the role, the same way channels get their topic and
+      // overwrites re-applied. Permissions are left alone: those get adjusted by
+      // hand often enough that overwriting them would be its own bug.
+      const wantColor = def.color ?? 0
+      const changes: string[] = []
+      if (existing.hoist !== (def.hoist ?? false)) changes.push('hoist')
+      if (existing.color !== wantColor) changes.push('colour')
+      if (existing.mentionable !== (def.mentionable ?? false)) changes.push('mentionable')
+
+      if (changes.length) {
+        await existing.edit({
+          hoist: def.hoist ?? false,
+          colors: { primaryColor: wantColor },
+          mentionable: def.mentionable ?? false,
+          reason: 'Royal Bears server setup',
+        })
+        log(`  updated ${def.name} (${changes.join(', ')})`)
+      }
       reused.push(`role ${def.name}`)
       byName.set(def.name, existing)
       continue
@@ -311,7 +329,34 @@ async function ensureGuildSettings(guild: Guild) {
   log(`  join messages now go to #${GUILD.systemChannel}`)
 }
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] })
+/**
+ * Gives every human the Member role and every bot the Bots role, which is what
+ * actually splits the member list into "people" and "apps". Roles above the
+ * bot's own are skipped rather than throwing.
+ */
+async function ensureMemberRoles(guild: Guild, roles: Map<string, Role>) {
+  const forHumans = roles.get(ROLE.member)
+  const forBots = roles.get(ROLE.bots)
+  if (!forHumans && !forBots) return
+
+  await guild.members.fetch()
+  const ceiling = guild.members.me?.roles.highest.position ?? 0
+  let given = 0
+
+  for (const member of guild.members.cache.values()) {
+    const wanted = member.user.bot ? forBots : forHumans
+    if (!wanted || member.roles.cache.has(wanted.id)) continue
+    if (wanted.position >= ceiling) {
+      log(`  ! cannot assign ${wanted.name} — it sits above my own role`)
+      continue
+    }
+    await member.roles.add(wanted, 'Royal Bears server setup').catch(() => {})
+    given++
+  }
+  log(given ? `  handed out ${given} membership role${given === 1 ? '' : 's'}` : '  membership roles already set')
+}
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] })
 
 client.once('clientReady', async () => {
   try {
@@ -326,6 +371,7 @@ client.once('clientReady', async () => {
 
     log('\nServer')
     await ensureGuildSettings(guild)
+    await ensureMemberRoles(guild, roles)
 
     log(`\nCreated ${created.length}:`)
     for (const c of created) log(`  + ${c}`)

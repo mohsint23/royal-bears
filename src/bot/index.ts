@@ -24,7 +24,6 @@ import { applySeed } from './seed.js'
 import { hasKey } from './riot.js'
 import { startPolling } from './jobs/poll.js'
 import { startWeekly } from './jobs/weekly.js'
-import { startPatchWatch } from './jobs/patchnotes.js'
 import { startAttendance } from './jobs/attendance.js'
 
 const client = new Client({
@@ -52,7 +51,6 @@ client.once(Events.ClientReady, async (ready) => {
   startPolling(client)
   startWeekly(client)
   startAttendance(client)
-  startPatchWatch(client)
   console.log(
     'Polling every 30 minutes. Weekly roundup Sundays 18:00, games check daily at 10:00, UK time.',
   )
