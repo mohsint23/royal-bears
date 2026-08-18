@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 256" width="1024" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a58c4"/><stop offset="55%" stop-color="#12295e"/><stop offset="100%" stop-color="#060d1f"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe89a"/><stop offset="55%" stop-color="#e6b422"/><stop offset="100%" stop-color="#b3830f"/>
+    </linearGradient>
+    <clipPath id="frame"><rect width="1024" height="256" rx="18"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="1024" height="256" fill="url(#bg)"/>
+    <g opacity="0.16" transform="translate(838 128) scale(0.9) translate(-256 -280)">
+      <path d="M166 130 L166 74 L208 108 L256 52 L304 108 L346 74 L346 130 Z" fill="#e6b422"/>
+      <circle cx="160" cy="212" r="48" fill="#e6b422"/><circle cx="352" cy="212" r="48" fill="#e6b422"/>
+      <path d="M256 168 L364 212 L378 304 L318 396 L256 420 L194 396 L134 304 L148 212 Z" fill="#e6b422"/>
+    </g>
+    <path d="M0 256 L150 0 L196 0 L46 256 Z" fill="#e6b422" opacity="0.16"/>
+    <!-- crown mark -->
+    <g transform="translate(72 52) scale(0.42)"><path d="M0 130 L0 74 L42 108 L90 52 L138 108 L180 74 L180 130 Z" fill="url(#gold)"/></g>
+    <text x="152" y="112" font-family="Helvetica-Bold, Helvetica, Arial, sans-serif" font-size="66"
+          font-weight="bold" fill="#ffffff" letter-spacing="2">ROYAL BEARS</text>
+    <text x="154" y="164" font-family="Helvetica, Arial, sans-serif" font-size="27"
+          fill="url(#gold)" letter-spacing="4">UNIVERSITY LEAGUE OF LEGENDS</text>
+    <rect x="154" y="192" width="150" height="5" rx="2.5" fill="url(#gold)"/>
+  </g>
+</svg>

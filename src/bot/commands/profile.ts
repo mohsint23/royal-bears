@@ -7,7 +7,17 @@ import { accounts, matches, ranks, riotId, type Account } from '../db.js'
 import { championDisplay, championIcon } from '../ddragon.js'
 import { KeyExpiredError } from '../riot.js'
 import { syncAccount } from '../sync.js'
-import { baseEmbed, columns, opggLink, rankLabel, rankShort, tierColour, topChampions, winratePct } from '../format.js'
+import {
+  baseEmbed,
+  columns,
+  opggLink,
+  rankLabel,
+  rankScore,
+  rankShort,
+  tierColour,
+  topChampions,
+  winratePct,
+} from '../format.js'
 import type { Command } from './types.js'
 
 const WEEK = 7 * 24 * 60 * 60 * 1000
@@ -19,7 +29,7 @@ export const profile: Command = {
     .setDescription('Rank, recent champions and form for a player')
     .addUserOption((o) => o.setName('user').setDescription('Which player — pick yourself for your own').setRequired(true))
     .addStringOption((o) =>
-      o.setName('account').setDescription('Which account (defaults to their main)').setAutocomplete(true),
+      o.setName('account').setDescription('Just one account. Leave off to see them all').setAutocomplete(true),
     ),
 
   async autocomplete(i) {
@@ -39,9 +49,8 @@ export const profile: Command = {
     const who = i.options.getUser('user', true)
     const chosen = i.options.getString('account')
     const linked = accounts.forUser(who.id)
-    const player = chosen ? linked.find((a) => a.puuid === chosen) : linked[0]
 
-    if (!player) {
+    if (!linked.length) {
       await i.reply({
         content:
           who.id === i.user.id
@@ -52,24 +61,53 @@ export const profile: Command = {
       return
     }
 
+    // Naming an account narrows to just that one; otherwise every account the
+    // player has linked gets its own block.
+    const player = chosen ? linked.find((a) => a.puuid === chosen) : undefined
+    if (chosen && !player) {
+      await i.reply({
+        content: 'That account is not linked to them any more.',
+        flags: MessageFlags.Ephemeral,
+      })
+      return
+    }
+
     await i.deferReply()
 
-    const solo = ranks.get(player.puuid, QUEUE.solo)
-    const stale = !solo || Date.now() - solo.updated_at > STALE
     let warning = ''
-
-    if (stale) {
+    for (const account of player ? [player] : linked) {
+      const solo = ranks.get(account.puuid, QUEUE.solo)
+      if (solo && Date.now() - solo.updated_at <= STALE) continue
       try {
-        await syncAccount(player)
+        await syncAccount(account)
       } catch (err) {
         warning =
           err instanceof KeyExpiredError
             ? '\n\n*The Riot key has expired, so this may be out of date. Staff can run `/setkey`.*'
             : '\n\n*Could not reach Riot just now, so this may be out of date.*'
+        break
       }
     }
 
-    await i.editReply({ embeds: [buildProfile(who, player, linked, warning)] })
+    if (player) {
+      await i.editReply({ embeds: [buildProfile(who, player, linked, warning)] })
+      return
+    }
+
+    // Every account gets the full treatment as its own embed. Main first, then
+    // the rest by rank. The "other accounts" footer is dropped, since they are
+    // all already on screen, and the warning only needs saying once.
+    const ordered = [...linked].sort(
+      (a, b) =>
+        Number(b.is_main) - Number(a.is_main) ||
+        rankScore(ranks.get(b.puuid, QUEUE.solo)) - rankScore(ranks.get(a.puuid, QUEUE.solo)),
+    )
+
+    await i.editReply({
+      embeds: ordered.map((account, idx) =>
+        buildProfile(who, account, linked, idx === 0 ? warning : '', false),
+      ),
+    })
   },
 }
 
@@ -82,6 +120,8 @@ export function buildProfile(
   player: Account,
   linked: Account[],
   warning = '',
+  /** Off when every account is already on screen as its own embed. */
+  showOthers = true,
 ) {
   const solo = ranks.get(player.puuid, QUEUE.solo)
   const flex = ranks.get(player.puuid, QUEUE.flex)
@@ -167,7 +207,7 @@ export function buildProfile(
     })
   }
 
-  const others = linked.filter((a) => a.puuid !== player.puuid)
+  const others = showOthers ? linked.filter((a) => a.puuid !== player.puuid) : []
   if (others.length) {
     embed.addFields({
       name: 'Other accounts',

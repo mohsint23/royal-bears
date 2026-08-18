@@ -18,10 +18,13 @@ import { config } from './config.js'
 import { byName, commands } from './commands/index.js'
 import { handleSetKeyModal, SETKEY_MODAL } from './commands/setkey.js'
 import { handleScrimButton, isScrimButton } from './commands/scrim.js'
+import { handleRoleButton, isRoleButton } from './roles.js'
 import { loadChampions } from './ddragon.js'
+import { applySeed } from './seed.js'
 import { hasKey } from './riot.js'
 import { startPolling } from './jobs/poll.js'
 import { startWeekly } from './jobs/weekly.js'
+import { startAttendance } from './jobs/attendance.js'
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
@@ -37,6 +40,7 @@ async function registerCommands(applicationId: string) {
 client.once(Events.ClientReady, async (ready) => {
   console.log(`Logged in as ${ready.user.tag}`)
 
+  applySeed()
   await loadChampions().catch((err) => console.error('Could not load champion list:', err))
   await registerCommands(ready.user.id)
 
@@ -46,7 +50,10 @@ client.once(Events.ClientReady, async (ready) => {
 
   startPolling(client)
   startWeekly(client)
-  console.log('Polling every 30 minutes. Weekly roundup on Sundays at 18:00 UK time.')
+  startAttendance(client)
+  console.log(
+    'Polling every 30 minutes. Weekly roundup Sundays 18:00, games check daily at 10:00, UK time.',
+  )
 })
 
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
@@ -61,6 +68,7 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     }
     if (interaction.isButton()) {
       if (isScrimButton(interaction.customId)) await handleScrimButton(interaction)
+      else if (isRoleButton(interaction.customId)) await handleRoleButton(interaction)
       return
     }
     if (!interaction.isChatInputCommand()) return
@@ -80,6 +88,10 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     }
   }
 })
+
+// Without a listener, a gateway error (a rate-limited member fetch, a dropped
+// socket) is an unhandled 'error' event, which takes the whole process down.
+client.on(Events.Error, (err) => console.error('[gateway] error:', err))
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => {

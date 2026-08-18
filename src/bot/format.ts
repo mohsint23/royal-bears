@@ -119,6 +119,17 @@ export function topChampions(games: MatchRow[], limit = 3) {
     .slice(0, limit)
 }
 
+/**
+ * The last few games as coloured squares with the record beside them. Shared so
+ * /profile and /team cannot drift apart on what recent form looks like.
+ */
+export function formSquares(games: MatchRow[], limit = 5): string {
+  const last = games.slice(0, limit)
+  if (!last.length) return 'No games tracked yet'
+  const wins = last.filter((m) => m.win).length
+  return `${last.map((m) => (m.win ? '🟢' : '🔴')).join('')} ${wins}W ${last.length - wins}L`
+}
+
 export function baseEmbed(): EmbedBuilder {
   return new EmbedBuilder().setColor(BRAND).setFooter({ text: 'Royal Bears' }).setTimestamp()
 }

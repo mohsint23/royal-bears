@@ -84,6 +84,16 @@ db.exec(`
     PRIMARY KEY (message_id, discord_id)
   );
 
+  -- Champions a captain has asked a player to get games on in ranked.
+  CREATE TABLE IF NOT EXISTS champ_targets (
+    discord_id  TEXT NOT NULL,
+    champion    TEXT NOT NULL,
+    assigned_by TEXT NOT NULL,
+    assigned_at INTEGER NOT NULL,
+    note        TEXT,
+    PRIMARY KEY (discord_id, champion)
+  );
+
   -- Loose key/value store: the Riot key, the last weekly roundup date, etc.
   CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
@@ -286,6 +296,35 @@ export const poolImages = {
     `).run(id, position, file, Date.now()),
   remove: (id: string, position: string) =>
     db.prepare('DELETE FROM pool_images WHERE discord_id = ? AND position = ?').run(id, position),
+}
+
+export type ChampTarget = {
+  discord_id: string
+  champion: string
+  assigned_by: string
+  assigned_at: number
+  note: string | null
+}
+
+export const champTargets = {
+  all: () => db.prepare('SELECT * FROM champ_targets ORDER BY assigned_at DESC').all() as ChampTarget[],
+  forUser: (id: string) =>
+    db
+      .prepare('SELECT * FROM champ_targets WHERE discord_id = ? ORDER BY assigned_at DESC')
+      .all(id) as ChampTarget[],
+  add: (t: Omit<ChampTarget, 'note'> & { note?: string | null }) =>
+    db
+      .prepare(
+        `INSERT INTO champ_targets (discord_id, champion, assigned_by, assigned_at, note)
+         VALUES (@discord_id, @champion, @assigned_by, @assigned_at, @note)
+         ON CONFLICT (discord_id, champion) DO UPDATE SET
+           assigned_by = excluded.assigned_by,
+           assigned_at = excluded.assigned_at,
+           note        = excluded.note`,
+      )
+      .run({ note: null, ...t }).changes,
+  remove: (id: string, champion: string) =>
+    db.prepare('DELETE FROM champ_targets WHERE discord_id = ? AND champion = ?').run(id, champion).changes > 0,
 }
 
 export const scrims = {

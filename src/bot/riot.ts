@@ -116,8 +116,16 @@ export async function getRankedEntries(puuid: string): Promise<LeagueEntry[]> {
   }
 }
 
-export function getMatchIds(puuid: string, count = 20) {
-  return call<string[]>(regionHost(), `/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=${count}`)
+/**
+ * `startTime` is epoch seconds, not milliseconds — Riot rejects the request
+ * outright if it is given the millisecond value.
+ */
+export function getMatchIds(puuid: string, count = 20, startTime?: number) {
+  const window = startTime ? `&startTime=${Math.floor(startTime / 1000)}` : ''
+  return call<string[]>(
+    regionHost(),
+    `/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=${count}${window}`,
+  )
 }
 
 export type Match = {

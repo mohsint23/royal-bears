@@ -10,7 +10,12 @@
     "start": "tsx src/bot/index.ts",
     "typecheck": "tsc --noEmit -p .",
     "post-help": "tsx src/postHelp.ts",
+    "post-roles": "tsx src/postRoles.ts",
+    "post-welcome": "tsx src/postWelcome.ts",
+    "post-tryouts": "tsx src/postTryouts.ts",
+    "attendance": "tsx src/runAttendance.ts",
     "set-avatar": "tsx src/setAvatar.ts",
+    "set-server-icon": "tsx src/setServerIcon.ts",
     "preview": "tsx src/preview.ts"
   },
   "dependencies": {

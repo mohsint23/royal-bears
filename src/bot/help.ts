@@ -10,17 +10,20 @@ const EVERYONE: readonly (readonly [string, string])[] = [
   ['/accounts list `user:`', 'See which accounts are linked and which is the main.'],
   ['/accounts main `account:`', 'Choose which account counts as your main.'],
   ['/accounts remove `account:`', 'Unlink an account.'],
-  ['/profile `user:` `[account]`', 'Rank, form this week, most-played champions, last five games. Pick yourself for your own.'],
-  ['/team `a|b`', 'A whole roster at a glance, with a multi-search link.'],
+  ['/profile `user:` `[account]`', 'Every account they have linked — rank, form, champions, last five games. Add `account:` for just one.'],
+  ['/team `a|b`', 'A whole roster in one embed — every account, mains and alts, with rank, form and champions.'],
   ['/multi `a|b`', 'Just the op.gg multi-search link for a roster.'],
   ['/pool upload `image:`', 'Upload your tier list. Add `position:` if it only covers one role.'],
-  ['/pool view `user:`', 'Show a player’s tier list.'],
+  ['/pool view `[user]` `[team]`', 'Show a player’s tier list, or a whole roster’s at once. Leave both off for your own.'],
   ['/pool remove', 'Delete one of your tier lists.'],
   ['/help', 'This message.'],
+  ['Position roles', 'Not a command — the buttons in #get-roles set Top, Jungle, Mid, ADC and Support.'],
 ]
 
 const STAFF: readonly (readonly [string, string])[] = [
   ['/scrim `when:` `team:` `[opponent]`', 'Post a scrim with In / Maybe / Out buttons.'],
+  ['/pace `[week]` `[refresh]`', 'Captains and officer only. How each roster is tracking against its weekly games.'],
+  ['/champ set|remove|list', 'Captains and officer only. Champions a player should be getting ranked games on.'],
   ['/refresh', 'Pull everyone’s latest games from Riot right now.'],
   ['/setkey', 'Paste a fresh Riot API key when the old one expires.'],
 ]
@@ -53,6 +56,30 @@ function fields(title: string, rows: readonly (readonly [string, string])[]) {
   }))
 }
 
+/**
+ * The short version, for a channel topic. Discord caps those at 1024
+ * characters, which the full list is nowhere near fitting inside.
+ */
+export function topicText(): string {
+  const text = [
+    'Royal Bears bot. Run /help for the full list.',
+    '',
+    '/register riot-id: — link a Riot account, up to 5',
+    '/accounts list|main|remove — manage them',
+    '/profile user: — every account, rank and form',
+    '/team a|b — the roster, mains and alts',
+    '/multi a|b — one op.gg link for a roster',
+    '/pool upload image: — upload your tier list',
+    '/pool view user:|team: — see tier lists',
+    '',
+    'Staff: /scrim, /refresh, /setkey',
+    'Tracker quiet? The Riot key expires daily — staff run /setkey.',
+  ].join('\n')
+
+  if (text.length > 1024) throw new Error(`Channel topic is ${text.length} characters; Discord allows 1024.`)
+  return text
+}
+
 export function helpEmbed() {
   return baseEmbed()
     .setColor(GOLD)
@@ -65,6 +92,12 @@ export function helpEmbed() {
     .addFields(
       ...fields('Everyone', EVERYONE),
       ...fields('Staff and captains', STAFF),
+      {
+        name: 'Roles',
+        value:
+          'Position roles are self-serve — the buttons in **#get-roles**. Rank roles come from ' +
+          'your best linked account automatically. Team roles are given out by staff.',
+      },
       {
         name: 'Smurfs and second accounts',
         value:

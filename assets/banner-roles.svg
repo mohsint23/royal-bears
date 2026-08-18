@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 256" width="1024" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22499f"/><stop offset="55%" stop-color="#12295e"/><stop offset="100%" stop-color="#070f24"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe89a"/><stop offset="55%" stop-color="#e6b422"/><stop offset="100%" stop-color="#b3830f"/>
+    </linearGradient>
+    <clipPath id="frame"><rect width="1024" height="256" rx="18"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="1024" height="256" fill="url(#bg)"/>
+    <!-- oversized bear watermark, bled off the right edge -->
+    <g opacity="0.13" transform="translate(792 128) scale(0.86) translate(-256 -280)">
+      <path d="M166 130 L166 74 L208 108 L256 52 L304 108 L346 74 L346 130 Z" fill="#e6b422"/>
+      <circle cx="160" cy="212" r="48" fill="#e6b422"/><circle cx="352" cy="212" r="48" fill="#e6b422"/>
+      <path d="M256 168 L364 212 L378 304 L318 396 L256 420 L194 396 L134 304 L148 212 Z" fill="#e6b422"/>
+    </g>
+    <!-- diagonal accent -->
+    <path d="M0 256 L150 0 L196 0 L46 256 Z" fill="#e6b422" opacity="0.16"/>
+    <text x="72" y="84" font-family="Helvetica-Bold, Helvetica, Arial, sans-serif" font-size="26"
+          font-weight="bold" fill="url(#gold)" letter-spacing="7">ROYAL BEARS</text>
+    <text x="72" y="152" font-family="Helvetica-Bold, Helvetica, Arial, sans-serif" font-size="60"
+          font-weight="bold" fill="#ffffff" letter-spacing="1">Grab your roles</text>
+    <rect x="72" y="182" width="120" height="5" rx="2.5" fill="url(#gold)"/>
+  </g>
+</svg>

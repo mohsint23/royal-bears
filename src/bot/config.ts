@@ -17,6 +17,7 @@ export const config = {
   region: process.env.RIOT_REGION || 'europe',
   opggRegion: process.env.OPGG_REGION || 'euw',
   statChannel: process.env.STAT_CHANNEL || 'stat-updates',
+  attendanceChannel: process.env.ATTENDANCE_CHANNEL || 'attendance',
   databasePath: process.env.DATABASE_PATH || './data/royal-bears.db',
 }
 
@@ -29,6 +30,17 @@ export const ROLE_NAMES = {
   aTeam: 'A Team',
   bTeam: 'B Team',
 } as const
+
+/**
+ * The three people who run the tracker: captains plus the officer. Narrower
+ * than STAFF_ROLES, which lets the coach in.
+ */
+export const TRACKER_ROLES: string[] = [
+  ROLE_NAMES.staff,
+  ROLE_NAMES.officer,
+  ROLE_NAMES.captainA,
+  ROLE_NAMES.captainB,
+]
 
 /** Anyone who may run staff-only commands. */
 export const STAFF_ROLES: string[] = [
@@ -59,6 +71,12 @@ export const QUEUE = {
   solo: 'RANKED_SOLO_5x5',
   flex: 'RANKED_FLEX_SR',
 } as const
+
+/** How many ranked games a player is expected to get through in a week. */
+export const WEEKLY_GAME_TARGET = 10
+
+/** Only these count toward that target — ARAM and Arena are not practice. */
+export const RANKED_QUEUE_IDS = [420, 440]
 
 /** Riot's numeric queue ids, used to label matches. */
 export const QUEUE_ID: Record<number, string> = {

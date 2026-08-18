@@ -9,6 +9,7 @@ import 'dotenv/config'
 import {
   ChannelType,
   Client,
+  GuildSystemChannelFlags,
   GatewayIntentBits,
   OverwriteType,
   PermissionFlagsBits as P,
@@ -20,7 +21,7 @@ import {
   type TextChannel,
   type VoiceChannel,
 } from 'discord.js'
-import { CATEGORIES, ROLE, ROLES, type CategoryDef, type ChannelDef } from './structure.js'
+import { CATEGORIES, GUILD, ROLE, ROLES, type CategoryDef, type ChannelDef } from './structure.js'
 
 const { DISCORD_TOKEN, GUILD_ID } = process.env
 
@@ -111,6 +112,34 @@ function viewOverwrites(guild: Guild, def: CategoryDef, roles: Map<string, Role>
   return overwrites
 }
 
+/**
+ * A channel that is more private than the category holding it. Roles the
+ * category admits are denied one by one, because a channel inherits the
+ * category's allows unless something at the channel level overrides them.
+ */
+function narrowedOverwrites(
+  guild: Guild,
+  category: CategoryDef,
+  viewableBy: string[],
+  roles: Map<string, Role>,
+): OverwriteResolvable[] {
+  const overwrites: OverwriteResolvable[] = [
+    { id: guild.roles.everyone.id, deny: [P.ViewChannel], type: OverwriteType.Role },
+  ]
+
+  for (const name of category.viewableBy ?? []) {
+    if (viewableBy.includes(name)) continue
+    const role = roles.get(name)
+    if (role) overwrites.push({ id: role.id, deny: [P.ViewChannel], type: OverwriteType.Role })
+  }
+
+  for (const name of viewableBy) {
+    const role = roles.get(name)
+    if (role) overwrites.push({ id: role.id, allow: [P.ViewChannel], type: OverwriteType.Role })
+  }
+  return overwrites
+}
+
 /** Read-only means everyone can see it, only Staff and Coach can post in it. */
 function channelOverwrites(
   guild: Guild,
@@ -118,7 +147,13 @@ function channelOverwrites(
   channel: ChannelDef,
   roles: Map<string, Role>,
 ): OverwriteResolvable[] {
-  const base = viewOverwrites(guild, category, roles)
+  const base = channel.public
+    ? // A channel-level allow beats the category's deny, so this reaches past a
+      // private category without opening the rest of it.
+      [{ id: guild.roles.everyone.id, allow: [P.ViewChannel], type: OverwriteType.Role } as OverwriteResolvable]
+    : channel.viewableBy
+      ? narrowedOverwrites(guild, category, channel.viewableBy, roles)
+      : viewOverwrites(guild, category, roles)
   if (!channel.readOnly) return base
 
   const merged = new Map<string, OverwriteResolvable>()
@@ -128,14 +163,16 @@ function channelOverwrites(
   merged.set(guild.roles.everyone.id, {
     id: guild.roles.everyone.id,
     type: OverwriteType.Role,
+    // Keep whatever was already allowed: a public read-only channel needs to
+    // hold on to its ViewChannel allow, not just gain the posting denies.
+    allow: [...((everyone?.allow as bigint[]) ?? [])],
     deny: [...((everyone?.deny as bigint[]) ?? []), P.SendMessages, P.CreatePublicThreads, P.CreatePrivateThreads],
   })
 
   // Only hand posting rights to roles that can already see the category.
   // Granting ViewChannel to a role the category excludes would leak the channel.
-  const posters = category.viewableBy
-    ? [ROLE.staff, ROLE.coach].filter((n) => category.viewableBy!.includes(n))
-    : [ROLE.staff, ROLE.coach]
+  const canSee = channel.public ? undefined : (channel.viewableBy ?? category.viewableBy)
+  const posters = canSee ? [ROLE.staff, ROLE.coach].filter((n) => canSee.includes(n)) : [ROLE.staff, ROLE.coach]
 
   for (const name of posters) {
     const role = roles.get(name)
@@ -156,6 +193,27 @@ const CHANNEL_TYPES = {
   voice: ChannelType.GuildVoice,
   forum: ChannelType.GuildForum,
 } as const
+
+/**
+ * Forum post tags. Applicants pick their own positions; the status tags are
+ * moderated, so nobody can mark their own application Accepted.
+ */
+async function ensureTags(channel: ForumChannel, def: ChannelDef) {
+  if (!def.tags?.length) return
+  const wanted = def.tags.map((t) => ({
+    name: t.name,
+    moderated: t.moderated ?? false,
+    emoji: t.emoji ? { id: null, name: t.emoji } : null,
+  }))
+  const same =
+    channel.availableTags.length === wanted.length &&
+    channel.availableTags.every(
+      (t, i) => t.name === wanted[i]!.name && t.moderated === wanted[i]!.moderated,
+    )
+  if (same) return
+  await channel.setAvailableTags(wanted, 'Royal Bears server setup')
+  log(`  tagged #${channel.name}: ${wanted.map((t) => t.name).join(', ')}`)
+}
 
 async function ensureChannels(guild: Guild, roles: Map<string, Role>) {
   await guild.channels.fetch()
@@ -200,6 +258,7 @@ async function ensureChannels(guild: Guild, roles: Map<string, Role>) {
         if (channel.topic && takesTopic && existing.topic !== channel.topic) {
           await existing.setTopic(channel.topic, 'Royal Bears server setup')
         }
+        if (existing.type === ChannelType.GuildForum) await ensureTags(existing, channel)
         reused.push(`#${channel.name}`)
         continue
       }
@@ -212,7 +271,7 @@ async function ensureChannels(guild: Guild, roles: Map<string, Role>) {
         log('    Delete the old one in Discord if you do not want the duplicate.')
       }
 
-      await guild.channels.create({
+      const made = await guild.channels.create({
         name: channel.name,
         type: wanted,
         parent: parent.id,
@@ -220,9 +279,36 @@ async function ensureChannels(guild: Guild, roles: Map<string, Role>) {
         permissionOverwrites: channelOverwrites(guild, category, channel, roles),
         reason: 'Royal Bears server setup',
       } as never)
+      if (made.type === ChannelType.GuildForum) await ensureTags(made, channel)
       created.push(`#${channel.name}`)
     }
   }
+}
+
+/**
+ * Server-wide settings. Join messages need somewhere to land, and a server with
+ * none reads as empty to anyone arriving from an invite link.
+ */
+async function ensureGuildSettings(guild: Guild) {
+  const channel = guild.channels.cache.find(
+    (c) => c.type === ChannelType.GuildText && c.name === GUILD.systemChannel,
+  )
+  if (!channel) {
+    log(`  ! no #${GUILD.systemChannel} to use for join messages`)
+    return
+  }
+
+  if (guild.systemChannelId === channel.id) {
+    log(`  join messages already go to #${GUILD.systemChannel}`)
+    return
+  }
+
+  await guild.setSystemChannel(channel.id, 'Royal Bears server setup')
+  await guild.setSystemChannelFlags(
+    [GuildSystemChannelFlags.SuppressGuildReminderNotifications, GuildSystemChannelFlags.SuppressPremiumSubscriptions],
+    'Royal Bears server setup',
+  )
+  log(`  join messages now go to #${GUILD.systemChannel}`)
 }
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] })
@@ -237,6 +323,9 @@ client.once('clientReady', async () => {
 
     log('\nChannels')
     await ensureChannels(guild, roles)
+
+    log('\nServer')
+    await ensureGuildSettings(guild)
 
     log(`\nCreated ${created.length}:`)
     for (const c of created) log(`  + ${c}`)

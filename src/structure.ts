@@ -120,12 +120,32 @@ export const ROLES: RoleDef[] = [
   { name: 'Support', mentionable: true },
 ]
 
+/** Server-wide settings applied by the setup script. */
+export const GUILD = {
+  /** Where Discord posts its own "X joined the server" messages. */
+  systemChannel: 'general',
+}
+
 export type ChannelDef = {
   name: string
   type: 'text' | 'voice' | 'forum'
   topic?: string
   /** Only Staff and Coach can post. Everyone else reads. */
   readOnly?: boolean
+  /**
+   * Narrows visibility below the category's. Roles the category lets in but
+   * this list leaves out are denied explicitly, since a channel sitting in a
+   * category otherwise inherits everyone the category allows.
+   */
+  viewableBy?: string[]
+  /**
+   * Widens visibility above the category's: everyone sees it even though the
+   * category around it is private. The entry point to a restricted area has to
+   * be reachable by the people who have not been let in yet.
+   */
+  public?: boolean
+  /** Forum post tags. `moderated` ones can only be applied by staff. */
+  tags?: { name: string; emoji?: string; moderated?: boolean }[]
 }
 
 export type CategoryDef = {
@@ -187,8 +207,31 @@ export const CATEGORIES: CategoryDef[] = [
     name: '🎯 TRYOUTS',
     viewableBy: [...TEAM_STAFF, ROLE.captainA, ROLE.captainB, ROLE.tryout],
     channels: [
-      { name: 'tryout-info', type: 'text', readOnly: true, topic: 'What we are looking for and how the trial works' },
-      { name: 'tryout-applications', type: 'forum', topic: 'One thread per applicant. Post your op.gg, roles, and availability' },
+      // Both are public: someone who has not been given the Tryout role yet
+      // still has to be able to read the terms and put an application in.
+      {
+        name: 'tryout-info',
+        type: 'text',
+        readOnly: true,
+        public: true,
+        topic: 'What we are looking for and how the trial works',
+      },
+      {
+        name: 'tryout-applications',
+        type: 'forum',
+        public: true,
+        topic: 'One thread per applicant. Post your op.gg, roles, and availability',
+        tags: [
+          { name: 'Top', emoji: '⬆️' },
+          { name: 'Jungle', emoji: '🌿' },
+          { name: 'Mid', emoji: '✳️' },
+          { name: 'ADC', emoji: '🏹' },
+          { name: 'Support', emoji: '🛡️' },
+          { name: 'Trialling', emoji: '🎯', moderated: true },
+          { name: 'Accepted', emoji: '✅', moderated: true },
+          { name: 'Declined', emoji: '🚫', moderated: true },
+        ],
+      },
       { name: 'tryout-chat', type: 'text', topic: 'Questions and chat for people trialling' },
       { name: 'Tryout Lobby', type: 'voice' },
     ],
@@ -199,6 +242,25 @@ export const CATEGORIES: CategoryDef[] = [
     channels: [
       { name: 'stat-updates', type: 'text', readOnly: true, topic: 'Rank changes and weekly roundups, posted by the bot' },
       { name: 'bot-commands', type: 'text', topic: 'Run bot commands in here to keep other channels clean' },
+      {
+        name: 'attendance',
+        type: 'text',
+        readOnly: true,
+        // Deliberately tighter than the rest of the category: this is about
+        // players falling short, so the captains being discussed cannot see it.
+        viewableBy: [ROLE.staff, ROLE.officer],
+        topic: [
+          'Games check, posted here every morning at 10:00 UK.',
+          'Monday = the finished week, pass or fail. Tue–Sun = pace so far this week.',
+          'Target is 10 ranked games a week (solo + flex), across all a player’s accounts.',
+          '',
+          'Commands — captains and the LoL Officer only, and replies are private to you:',
+          '/pace — the same report on demand. week: this week or last. refresh: pull from Riot first (slower, exact).',
+          '/champ set user: champion: [note:] — ask a player to get ranked games on a champion.',
+          '/champ list [user:] — targets, games played since assigned, and winrate.',
+          '/champ remove user: champion: — drop a target.',
+        ].join('\n'),
+      },
     ],
   },
 ]

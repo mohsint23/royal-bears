@@ -30,7 +30,11 @@ const QUEUE_KEY: Record<string, 'solo' | 'flex'> = {
   [QUEUE.flex]: 'flex',
 }
 
-export async function syncAccount(account: Account, matchCount = 10): Promise<SyncResult> {
+export async function syncAccount(
+  account: Account,
+  matchCount = 10,
+  startTime?: number,
+): Promise<SyncResult> {
   const changes: RankChange[] = []
 
   const entries = await getRankedEntries(account.puuid)
@@ -64,7 +68,7 @@ export async function syncAccount(account: Account, matchCount = 10): Promise<Sy
     }
   }
 
-  const ids = await getMatchIds(account.puuid, matchCount)
+  const ids = await getMatchIds(account.puuid, matchCount, startTime)
   const known = matches.known(account.puuid, ids)
   const fresh = ids.filter((id) => !known.has(id))
 

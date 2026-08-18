@@ -9,6 +9,10 @@
 import { createServer } from 'node:http'
 import { accounts } from './bot/db.js'
 import { buildProfile } from './bot/commands/profile.js'
+import { buildTeam } from './bot/commands/team.js'
+import { rolesEmbed } from './bot/roles.js'
+import { buildAttendance, type PlayerWeek } from './bot/jobs/attendance.js'
+import { matches } from './bot/db.js'
 import { loadChampions } from './bot/ddragon.js'
 
 await loadChampions()
@@ -66,11 +70,39 @@ function render(e: any) {
 }
 
 const all = accounts.all()
-const bodies = all.map((a) => {
-  const who = fake(a.discord_id, a.game_name.split(' ').pop() ?? 'Player')
-  const linked = accounts.forUser(a.discord_id)
-  return `<div class="msg"><div class="mhead"><img class="pfp" src="https://api.dicebear.com/7.x/shapes/png?seed=bear"><span class="bot">Royal Bear</span><span class="tag">APP</span></div>${render(buildProfile(who, a, linked).toJSON())}</div>`
-}).join('')
+const message = (embed: any) =>
+  `<div class="msg"><div class="mhead"><img class="pfp" src="https://api.dicebear.com/7.x/shapes/png?seed=bear"><span class="bot">Royal Bear</span><span class="tag">APP</span></div>${render(embed)}</div>`
+
+const mains = all.filter((a) => a.is_main)
+// Group by owner so alts render under their player, as /team now does.
+const roster = mains.map((main) => ({
+  name: main.game_name.split(' ').pop() ?? 'Player',
+  accounts: all.filter((a) => a.discord_id === main.discord_id),
+}))
+
+// A deliberately mixed week, so the below-target layout can be looked at too.
+const week = Date.now() - 7 * 24 * 60 * 60 * 1000
+const rankedFor = (puuid: string) => matches.since(puuid, week).filter((m) => [420, 440].includes(m.queue_id))
+const attendance: PlayerWeek[] = [
+  { discordId: mains[0]!.discord_id, name: 'mo', team: 'a', games: rankedFor(mains[0]!.puuid), registered: true },
+  { discordId: mains[1]!.discord_id, name: 'Chia', team: 'a', games: rankedFor(mains[1]!.puuid).slice(0, 4), registered: true },
+  { discordId: '3', name: 'Connorgunn', team: 'b', games: [], registered: false },
+  { discordId: '4', name: 'Ali', team: 'b', games: rankedFor(mains[0]!.puuid).slice(0, 9), registered: true },
+]
+
+const bodies =
+  message(buildAttendance(attendance, { mode: 'pace', day: 3 }).embed.toJSON()) +
+  message(buildAttendance(attendance, { mode: 'final' }).embed.toJSON()) +
+  message(buildTeam('A Team', roster, ['Connor', 'Ali']).toJSON()) +
+  message(rolesEmbed((n) => `#${n}`).toJSON()) +
+  '<div class="buttons">' +
+  ['⬆️ Top', '🌿 Jungle', '✳️ Mid', '🏹 ADC', '🛡️ Support'].map((b) => `<span class="btn">${b}</span>`).join('') +
+  '</div>' +
+  // /profile with no account: renders one of these per linked account.
+  accounts
+    .forUser(all[0]!.discord_id)
+    .map((a) => message(buildProfile(fake(a.discord_id, 'mo'), a, accounts.forUser(a.discord_id), '', false).toJSON()))
+    .join('')
 
 const page = `<!doctype html><meta charset="utf-8"><style>
   body{background:#313338;margin:0;padding:24px;font:400 16px/1.375 "gg sans",Helvetica,Arial,sans-serif;color:#dbdee1}
@@ -94,6 +126,8 @@ const page = `<!doctype html><meta charset="utf-8"><style>
   b{font-weight:700;color:#f2f3f5} code{background:#1e1f22;padding:1px 4px;border-radius:3px;font-size:13px}
   h3{font-size:16px;font-weight:700;color:#f2f3f5;margin:0 0 2px}
   .sub{font-size:12px;color:#949ba4}
+  .buttons{margin:-20px 0 26px 48px;display:flex;gap:8px;max-width:520px}
+  .btn{background:#4e5058;color:#fff;font-size:14px;font-weight:500;padding:8px 14px;border-radius:3px}
   pre{background:#1e1f22;border:1px solid #1e1f22;border-radius:4px;padding:8px;margin:2px 0 0;
       font:400 13px/1.35 Consolas,"Courier New",monospace;color:#dbdee1;white-space:pre;overflow-x:auto}
 </style>${bodies}`
