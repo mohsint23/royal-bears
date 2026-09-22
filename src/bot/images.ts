@@ -28,15 +28,10 @@ const EXTENSIONS: Record<string, string> = {
 export type SaveFailure = { ok: false; reason: string }
 export type SaveSuccess = { ok: true; file: string }
 
-/**
- * Copies an uploaded image into storage. The stored name is generated rather
- * than taken from the upload, so a hostile filename cannot escape the folder.
- */
-export async function saveImage(
-  discordId: string,
-  position: string,
-  attachment: Attachment,
-): Promise<SaveSuccess | SaveFailure> {
+export type Fetched = { ok: true; bytes: Buffer; extension: string }
+
+/** Downloads a Discord attachment, checking type and size first. */
+export async function fetchImage(attachment: Attachment): Promise<Fetched | SaveFailure> {
   const type = attachment.contentType?.split(';')[0]?.trim() ?? ''
   const extension = EXTENSIONS[type]
 
@@ -52,9 +47,23 @@ export async function saveImage(
 
   const bytes = Buffer.from(await response.arrayBuffer())
   if (bytes.byteLength > MAX_BYTES) return { ok: false, reason: 'That image is over the 8 MB limit.' }
+  return { ok: true, bytes, extension }
+}
 
-  const file = `${discordId}-${position}.${extension}`
-  writeFileSync(join(DIRECTORY, file), bytes)
+/**
+ * Copies an uploaded image into storage. The stored name is generated rather
+ * than taken from the upload, so a hostile filename cannot escape the folder.
+ */
+export async function saveImage(
+  discordId: string,
+  position: string,
+  attachment: Attachment,
+): Promise<SaveSuccess | SaveFailure> {
+  const fetched = await fetchImage(attachment)
+  if (!fetched.ok) return fetched
+
+  const file = `${discordId}-${position}.${fetched.extension}`
+  writeFileSync(join(DIRECTORY, file), fetched.bytes)
 
   // A re-upload in a different format would otherwise leave the old file behind.
   const previous = poolImages.get(discordId, position)

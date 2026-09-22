@@ -94,7 +94,8 @@ rank, main role and champs, secondary roles and champs, one message at a time,
 then posts a summary card with **Trialling / Accept / Decline / Close** buttons.
 Accept and Decline DM the applicant; Close deletes the channel and keeps the
 answers in the database. `/applicants` (staff) attaches a spreadsheet of every
-application — Discord name, IGN, peak rank, op.gg link, year and the rest —
+application — Discord name, IGN, peak rank, op.gg link, year, team, the rest,
+and the tier list embedded as a picture —
 built fresh from the database each time; `npm run export-applicants` writes the
 same file locally. Reading typed answers needs the **Message Content
 Intent** switched on under Bot → Privileged Gateway Intents in the developer

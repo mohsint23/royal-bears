@@ -5,25 +5,38 @@
  * tested without a bot token. tickets.ts does the talking.
  */
 
+export const TIERMAKER = 'https://tiermaker.com/create/league-of-legends-always-updated-champions-207393'
+
+/** How an answer arrives: typed text, a team choice, or an uploaded image. */
+export type QuestionKind = 'text' | 'team' | 'image'
+
 const LIST = [
-  { key: 'riot_id', label: 'Riot ID', prompt: 'Riot ID? Like `Name#TAG` — it goes on your card as an op.gg link.' },
-  { key: 'year', label: 'Year', prompt: 'What year are you in at uni? (1st, 2nd, 3rd, 4th, masters, PhD…)' },
-  { key: 'peak_rank', label: 'Peak rank', prompt: 'Peak rank?' },
-  { key: 'current_rank', label: 'Current rank', prompt: 'Current rank?' },
-  { key: 'main_role', label: 'Main role', prompt: 'Main role?' },
-  { key: 'main_champs', label: 'Main-role champs', prompt: 'Champs for that role? Best first.' },
-  { key: 'secondary_roles', label: 'Secondary role(s)', prompt: 'Secondary role(s)? Or *none*.' },
-  { key: 'secondary_champs', label: 'Secondary champs', prompt: 'Champs for those roles?' },
+  { key: 'riot_id', label: 'Riot ID', kind: 'text', prompt: 'Riot ID? Like `Name#TAG` — it goes on your card as an op.gg link.' },
+  { key: 'year', label: 'Year', kind: 'text', prompt: 'What year are you in at uni? (1st, 2nd, 3rd, 4th, masters, PhD…)' },
+  { key: 'team', label: 'Applying for', kind: 'team', prompt: 'Which team are you applying for? **A**, **B**, or **A and B**.' },
+  { key: 'peak_rank', label: 'Peak rank', kind: 'text', prompt: 'Peak rank?' },
+  { key: 'current_rank', label: 'Current rank', kind: 'text', prompt: 'Current rank?' },
+  { key: 'main_role', label: 'Main role', kind: 'text', prompt: 'Main role?' },
+  { key: 'main_champs', label: 'Main-role champs', kind: 'text', prompt: 'Champs for that role? Best first.' },
+  { key: 'secondary_roles', label: 'Secondary role(s)', kind: 'text', prompt: 'Secondary role(s)? Or *none*.' },
+  { key: 'secondary_champs', label: 'Secondary champs', kind: 'text', prompt: 'Champs for those roles?' },
+  {
+    key: 'tier_list',
+    label: 'Tier list',
+    kind: 'image',
+    prompt: `Last one: make a champion tier list at <${TIERMAKER}>, then **upload the image here** (PNG or JPG).`,
+  },
 ] as const
 
 export type QuestionKey = (typeof LIST)[number]['key']
-export type Question = { key: QuestionKey; label: string; prompt: string }
+export type Question = { key: QuestionKey; label: string; kind: QuestionKind; prompt: string }
 
-/** Prompts carry their own "n/8" so the count never drifts from the list. */
+/** Prompts carry their own "n/10" so the count never drifts from the list. */
 export const QUESTIONS: readonly Question[] = LIST.map((q, n) => ({
   ...q,
   prompt: `**${n + 1}/${LIST.length}** ${q.prompt}`,
 }))
+
 export type Answers = Partial<Record<QuestionKey, string>>
 export type TicketStatus = 'open' | 'trialling' | 'accepted' | 'declined' | 'closed'
 
@@ -64,4 +77,16 @@ export function parseRiotId(input: string): { gameName: string; tagLine: string 
   const [name, tag, ...rest] = input.trim().split('#')
   if (!name?.trim() || !tag?.trim() || rest.length) return undefined
   return { gameName: name.trim(), tagLine: tag.trim() }
+}
+
+export const TEAMS = ['A', 'B', 'A and B'] as const
+export type TeamChoice = (typeof TEAMS)[number]
+
+/** "a", "team b", "both", "a & b", "a and b" → one of TEAMS. */
+export function parseTeam(input: string): TeamChoice | undefined {
+  const t = input.toLowerCase().replace(/team/g, '').replace(/[^a-z&+/]/g, '')
+  if (t === 'both' || t === 'aandb' || t === 'bothab' || t === 'ab' || t === 'a&b' || t === 'a+b' || t === 'a/b' || t === 'either' || t === 'aorb') return 'A and B'
+  if (t === 'a') return 'A'
+  if (t === 'b') return 'B'
+  return undefined
 }

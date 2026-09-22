@@ -110,12 +110,14 @@ db.exec(`
     status             TEXT NOT NULL DEFAULT 'open',
     riot_id            TEXT,
     year               TEXT,
+    team               TEXT,
     peak_rank          TEXT,
     current_rank       TEXT,
     main_role          TEXT,
     main_champs        TEXT,
     secondary_roles    TEXT,
     secondary_champs   TEXT,
+    tier_list          TEXT,
     summary_message_id TEXT,
     created_at         INTEGER NOT NULL,
     last_activity      INTEGER NOT NULL,
@@ -125,10 +127,10 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS tryout_tickets_user ON tryout_tickets (discord_id, status);
 `)
 
-// Tickets gained two questions after the table first shipped.
+// Tickets gained questions after the table first shipped.
 {
   const have = new Set((db.pragma('table_info(tryout_tickets)') as { name: string }[]).map((c) => c.name))
-  for (const col of ['riot_id', 'year']) {
+  for (const col of ['riot_id', 'year', 'team', 'tier_list']) {
     if (!have.has(col)) db.exec(`ALTER TABLE tryout_tickets ADD COLUMN ${col} TEXT`)
   }
 }

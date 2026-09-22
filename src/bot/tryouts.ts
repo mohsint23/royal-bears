@@ -8,6 +8,7 @@
 
 import type { EmbedBuilder } from 'discord.js'
 import { baseEmbed, GOLD } from './format.js'
+import { TIERMAKER } from './ticketFlow.js'
 
 type Ref = (name: string) => string
 
@@ -27,7 +28,7 @@ export function tryoutsEmbeds(ref: Ref): EmbedBuilder[] {
       .setDescription(
         `**1.** Hit **I'm here to trial** in ${ref('get-roles')}\n` +
           '**2.** Press **📩 Open a tryout ticket** below\n' +
-          '**3.** Answer eight quick questions — Riot ID, year, ranks, roles, champs\n' +
+          '**3.** Answer ten quick questions — Riot ID, year, team, ranks, roles, champs, tier list\n' +
           '**4.** A captain replies in your ticket within a few days',
       ),
 
@@ -38,7 +39,8 @@ export function tryoutsEmbeds(ref: Ref): EmbedBuilder[] {
         '• Rank is the least of it. We want people who talk, take feedback, and show up.\n' +
           '• Your ticket is private — just you and the captains.\n' +
           '• A no means *not this term*. Apply again next term.\n' +
-          '• Your Riot ID becomes an op.gg link on your card, so get the tag right.',
+          '• Your Riot ID becomes an op.gg link on your card, so get the tag right.\n' +
+          `• The last question is a champion tier list — make it at <${TIERMAKER}> and upload the image.`,
       ),
   ]
 }

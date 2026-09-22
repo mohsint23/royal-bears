@@ -2,7 +2,7 @@
  * Tryout tickets.
  *
  * Pressing the button under #tryout-info opens a private #tryout-<name>
- * channel where the bot asks eight questions one at a time, then posts a summary card with staff
+ * channel where the bot asks ten questions one at a time, then posts a summary card with staff
  * buttons. The questions and naming rules live in ticketFlow.ts; this file is
  * the Discord side: channels, permissions, messages, buttons.
  *
@@ -10,8 +10,11 @@
  * arrives, so a restart resumes rather than starting over.
  */
 
+import { mkdirSync, existsSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import {
   ActionRowBuilder,
+  AttachmentBuilder,
   ButtonBuilder,
   ButtonStyle,
   ChannelType,
@@ -28,13 +31,17 @@ import {
 import { config, ROLE_NAMES, STAFF_ROLES } from './config.js'
 import { accounts, riotId, tickets, ticketAnswers, type Account, type Ticket } from './db.js'
 import { baseEmbed, GOLD, GREEN, RED, opggLink } from './format.js'
+import { fetchImage } from './images.js'
 import {
   channelName,
   MAX_ANSWER,
   nextQuestion,
   nudgeDue,
   parseRiotId,
+  parseTeam,
   QUESTIONS,
+  TIERMAKER,
+  type Question,
   type TicketStatus,
 } from './ticketFlow.js'
 import { isStaff } from './util.js'
@@ -55,6 +62,11 @@ const BUTTON = {
 const REVIEWER_ROLES = [ROLE_NAMES.captainA, ROLE_NAMES.captainB, ROLE_NAMES.officer]
 
 const NUDGE_EVERY = 60 * 60 * 1000
+
+/** Tier-list uploads live next to the database, like pool images, because Discord's attachment URLs expire. */
+const TIER_DIR = join(dirname(config.databasePath), 'tier-lists')
+mkdirSync(TIER_DIR, { recursive: true })
+export const tierListPath = (file: string) => join(TIER_DIR, file)
 
 export const isTicketButton = (customId: string) => customId.startsWith(PREFIX)
 
@@ -109,7 +121,7 @@ async function createTicket(guild: Guild, member: GuildMember): Promise<TextChan
   tickets.create({ channel_id: channel.id, discord_id: member.id, username: member.user.username })
 
   await channel.send(
-    `<@${member.id}> welcome — just you and the captains in here. Eight quick questions, one message each.\n${QUESTIONS[0].prompt}`,
+    `<@${member.id}> welcome — just you and the captains in here. ${QUESTIONS.length} quick questions, one message each.\n${QUESTIONS[0]!.prompt}`,
   )
   return channel
 }
@@ -145,20 +157,8 @@ export async function handleTicketMessage(message: Message) {
   const question = nextQuestion(answers)
   if (!question) return
 
-  const text = message.content.trim()
-  if (!text) {
-    await message.reply('Text please — I can only read typed answers.')
-    return
-  }
-  if (text.length > MAX_ANSWER) {
-    await message.reply(`Bit long — keep it under ${MAX_ANSWER} characters so it fits on the card.`)
-    return
-  }
-
-  if (question.key === 'riot_id' && !parseRiotId(text)) {
-    await message.reply('Needs to be `Name#TAG` — the bit after the # is on your Riot profile.')
-    return
-  }
+  const text = await readAnswer(message, question, ticket)
+  if (text === undefined) return
 
   tickets.answer(ticket.channel_id, question.key, text)
   answers[question.key] = text
@@ -185,6 +185,12 @@ function opggField(typed: string | null, main: Account | undefined): string {
   return link ? `[${link.label}](${link.url})` : '—'
 }
 
+/** The stored tier list as a Discord attachment, if the file is still there. */
+export function tierListFile(ticket: Ticket): AttachmentBuilder | undefined {
+  if (!ticket.tier_list || !existsSync(tierListPath(ticket.tier_list))) return undefined
+  return new AttachmentBuilder(tierListPath(ticket.tier_list), { name: ticket.tier_list })
+}
+
 /** The card staff read. Exported so preview.ts can render it without Discord. */
 export function summaryEmbed(ticket: Ticket, main: Account | undefined) {
   return baseEmbed()
@@ -192,12 +198,13 @@ export function summaryEmbed(ticket: Ticket, main: Account | undefined) {
     .setTitle('Tryout application')
     .setDescription(`<@${ticket.discord_id}>`)
     .addFields(
-      ...QUESTIONS.map((q) => ({
+      ...QUESTIONS.filter((q) => q.kind !== 'image').map((q) => ({
         name: q.key === 'riot_id' ? 'op.gg' : q.label,
         value: q.key === 'riot_id' ? opggField(ticket.riot_id, main) : ticket[q.key] || '—',
-        inline: q.key === 'year' || q.key.endsWith('_rank') || q.key.endsWith('_role'),
+        inline: q.key === 'year' || q.key === 'team' || q.key.endsWith('_rank') || q.key.endsWith('_role'),
       })),
     )
+    .setImage(ticket.tier_list ? `attachment://${ticket.tier_list}` : null)
 }
 
 export const summaryButtons = () =>
@@ -208,6 +215,51 @@ export const summaryButtons = () =>
     new ButtonBuilder().setCustomId(BUTTON.close).setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary),
   )
 
+/**
+ * Turns the message into the stored answer for this question, or replies with
+ * what was wrong and returns undefined. Images are downloaded to disk here.
+ */
+async function readAnswer(message: Message<true>, question: Question, ticket: Ticket): Promise<string | undefined> {
+  if (question.kind === 'image') {
+    const attachment = message.attachments.find((a) => a.contentType?.startsWith('image/'))
+    if (!attachment) {
+      await message.reply(`Upload the tier list as an image (make it at <${TIERMAKER}>, then the download button).`)
+      return undefined
+    }
+    const fetched = await fetchImage(attachment)
+    if (!fetched.ok) {
+      await message.reply(fetched.reason)
+      return undefined
+    }
+    const file = `${ticket.discord_id}.${fetched.extension}`
+    writeFileSync(tierListPath(file), fetched.bytes)
+    return file
+  }
+
+  const text = message.content.trim()
+  if (!text) {
+    await message.reply('Text please — I can only read typed answers.')
+    return undefined
+  }
+  if (text.length > MAX_ANSWER) {
+    await message.reply(`Bit long — keep it under ${MAX_ANSWER} characters so it fits on the card.`)
+    return undefined
+  }
+  if (question.kind === 'team') {
+    const team = parseTeam(text)
+    if (!team) {
+      await message.reply('Just **A**, **B**, or **A and B**.')
+      return undefined
+    }
+    return team
+  }
+  if (question.key === 'riot_id' && !parseRiotId(text)) {
+    await message.reply('Needs to be `Name#TAG` — the bit after the # is on your Riot profile.')
+    return undefined
+  }
+  return text
+}
+
 async function postSummary(channel: TextChannel, ticket: Ticket) {
   const guild = channel.guild
   const reviewers = REVIEWER_ROLES.map((name) => guild.roles.cache.find((r) => r.name === name))
@@ -216,6 +268,7 @@ async function postSummary(channel: TextChannel, ticket: Ticket) {
   const sent = await channel.send({
     content: `${reviewers.map((r) => `<@&${r.id}>`).join(' ')} application in from <@${ticket.discord_id}>.`.trim(),
     embeds: [summaryEmbed(ticket, accounts.mainFor(ticket.discord_id))],
+    files: [tierListFile(ticket)].filter((f): f is AttachmentBuilder => Boolean(f)),
     components: [summaryButtons()],
     allowedMentions: { roles: reviewers.map((r) => r.id), users: [ticket.discord_id] },
   })

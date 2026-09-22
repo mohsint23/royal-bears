@@ -1,14 +1,27 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { QUESTIONS, nextQuestion, isComplete, channelName, nudgeDue, parseRiotId } from './ticketFlow.js'
+import { QUESTIONS, nextQuestion, isComplete, channelName, nudgeDue, parseRiotId, parseTeam } from './ticketFlow.js'
 
-test('eight questions in the agreed order, numbered', () => {
+test('ten questions in the agreed order, numbered, image last', () => {
   assert.deepEqual(
     QUESTIONS.map((q) => q.key),
-    ['riot_id', 'year', 'peak_rank', 'current_rank', 'main_role', 'main_champs', 'secondary_roles', 'secondary_champs'],
+    ['riot_id', 'year', 'team', 'peak_rank', 'current_rank', 'main_role', 'main_champs', 'secondary_roles', 'secondary_champs', 'tier_list'],
   )
-  assert.ok(QUESTIONS[0]!.prompt.startsWith('**1/8**'))
-  assert.ok(QUESTIONS[7]!.prompt.startsWith('**8/8**'))
+  assert.ok(QUESTIONS[0]!.prompt.startsWith('**1/10**'))
+  assert.ok(QUESTIONS[9]!.prompt.startsWith('**10/10**'))
+  assert.equal(QUESTIONS[9]!.kind, 'image')
+  assert.equal(QUESTIONS[2]!.kind, 'team')
+})
+
+test('parseTeam understands the ways people write A, B or both', () => {
+  assert.equal(parseTeam('A'), 'A')
+  assert.equal(parseTeam('team b'), 'B')
+  assert.equal(parseTeam('A and B'), 'A and B')
+  assert.equal(parseTeam('both'), 'A and B')
+  assert.equal(parseTeam('a & b'), 'A and B')
+  assert.equal(parseTeam('either'), 'A and B')
+  assert.equal(parseTeam('c'), undefined)
+  assert.equal(parseTeam('yes'), undefined)
 })
 
 test('parseRiotId accepts Name#TAG only', () => {
@@ -20,7 +33,7 @@ test('parseRiotId accepts Name#TAG only', () => {
 
 test('nextQuestion walks the list and stops at the end', () => {
   assert.equal(nextQuestion({})?.key, 'riot_id')
-  assert.equal(nextQuestion({ riot_id: 'a#b', year: '2nd' })?.key, 'peak_rank')
+  assert.equal(nextQuestion({ riot_id: 'a#b', year: '2nd', team: 'A' })?.key, 'peak_rank')
   const all = Object.fromEntries(QUESTIONS.map((q) => [q.key, 'x']))
   assert.equal(nextQuestion(all), undefined)
   assert.equal(isComplete(all), true)
