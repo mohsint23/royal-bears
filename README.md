@@ -76,7 +76,7 @@ colour while a society member shows their rank colour.
                  🔊 General  🔊 Duo Queue 1  🔊 Duo Queue 2
 🏆 A TEAM        #a-chat  #a-scrims  #a-vod-review  #a-champ-pool  🔊 A Team
 🥈 B TEAM        #b-chat  #b-scrims  #b-vod-review  #b-champ-pool  🔊 B Team
-🎯 TRYOUTS       #tryout-info  #tryout-applications  #tryout-chat  🔊 Tryout Lobby
+🎯 TRYOUTS       #tryout-info  #tryout-chat  🔊 Tryout Lobby  (+ one #tryout-<name> per applicant)
 📊 TRACKER       #stat-updates  #bot-commands
 🔒 STAFF         #staff-chat  #roster-planning
 ```
@@ -86,9 +86,15 @@ to that roster plus Staff, Coach and Sub. TRYOUTS is locked to people holding
 the `Tryout` role plus Staff and Coach — announce that tryouts are open in
 `#announcements`, then hand out the `Tryout` role to let applicants in.
 
-`#tryout-applications` is a forum channel, so each applicant gets their own
-thread to post their op.gg and availability in, and you can discuss each one
-separately.
+Applications are tickets. When someone takes the `Tryout` role (the button in
+`#get-roles`, or a captain adding it by hand) the bot opens a private
+`#tryout-<name>` channel visible to them and staff, asks for peak rank, current
+rank, main role and champs, secondary roles and champs, one message at a time,
+then posts a summary card with **Trialling / Accept / Decline / Close** buttons.
+Accept and Decline DM the applicant; Close deletes the channel and keeps the
+answers in the database. Reading typed answers needs the **Message Content
+Intent** switched on under Bot → Privileged Gateway Intents in the developer
+portal.
 
 # The bot
 

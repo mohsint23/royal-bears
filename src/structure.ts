@@ -215,30 +215,14 @@ export const CATEGORIES: CategoryDef[] = [
     name: '🎯 TRYOUTS',
     viewableBy: [...TEAM_STAFF, ROLE.captainA, ROLE.captainB, ROLE.tryout],
     channels: [
-      // Both are public: someone who has not been given the Tryout role yet
-      // still has to be able to read the terms and put an application in.
+      // Public: someone who has not taken the Tryout role yet still has to be
+      // able to read how trials work. Applications are bot-made ticket channels.
       {
         name: 'tryout-info',
         type: 'text',
         readOnly: true,
         public: true,
         topic: 'What we are looking for and how the trial works',
-      },
-      {
-        name: 'tryout-applications',
-        type: 'forum',
-        public: true,
-        topic: 'One thread per applicant. Post your op.gg, roles, and availability',
-        tags: [
-          { name: 'Top', emoji: '⬆️' },
-          { name: 'Jungle', emoji: '🌿' },
-          { name: 'Mid', emoji: '✳️' },
-          { name: 'ADC', emoji: '🏹' },
-          { name: 'Support', emoji: '🛡️' },
-          { name: 'Trialling', emoji: '🎯', moderated: true },
-          { name: 'Accepted', emoji: '✅', moderated: true },
-          { name: 'Declined', emoji: '🚫', moderated: true },
-        ],
       },
       { name: 'tryout-chat', type: 'text', topic: 'Questions and chat for people trialling' },
       { name: 'Tryout Lobby', type: 'voice' },
