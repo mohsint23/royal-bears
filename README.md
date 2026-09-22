@@ -63,7 +63,8 @@ you want something gone, delete it in Discord yourself.
 ## What gets built
 
 **Roles**, highest first: Staff, Coach, A Team, B Team, Sub, Tryout, Member,
-the ten rank roles (Iron up to Challenger), and the five position roles.
+the ten rank roles (Iron up to Challenger), the five position roles, and
+`Gamers` — an opt-in ping for casual flex, Clash and ARAM lobbies.
 
 Team roles sit above rank roles, so a player on a roster shows their team
 colour while a society member shows their rank colour.

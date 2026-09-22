@@ -29,6 +29,8 @@ const PREFIX = 'role:'
 const CLEAR = 'role:__clear'
 const TRYOUT = 'role:__tryout'
 const TRYOUT_ROLE = 'Tryout'
+const GAMERS = 'role:__gamers'
+const GAMERS_ROLE = 'Gamers'
 const BANNER = 'banner-roles.png'
 
 /** Purely decorative, but it makes the row scannable at a glance. */
@@ -54,6 +56,11 @@ export function roleButtons() {
       ),
     ),
     new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId(GAMERS)
+        .setLabel('Ping me for games')
+        .setEmoji('🎮')
+        .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
         .setCustomId(TRYOUT)
         .setLabel("I'm here to trial")
@@ -88,6 +95,12 @@ export function rolesEmbed(ref: (name: string) => string) {
         value: "Pick them all. There's no limit, and no downside to being honest about a fill.",
       },
       {
+        name: '🎮 Want pinging for games?',
+        value:
+          'Hit **Ping me for games** for the **Gamers** role. Anyone can @Gamers when a flex, Clash or ' +
+          'ARAM lobby needs bodies. Tap again to stop the pings.',
+      },
+      {
         name: '🎯 Here to trial?',
         value:
           `Hit **I'm here to trial** and you're in — it gets you the Tryout role, opens ` +
@@ -105,7 +118,7 @@ export function rolesEmbed(ref: (name: string) => string) {
 
 /** Everything a member can hand themselves from this message. */
 function selfAssignable(guild: Guild): Role[] {
-  return [...POSITIONS, TRYOUT_ROLE]
+  return [...POSITIONS, TRYOUT_ROLE, GAMERS_ROLE]
     .map((name) => guild.roles.cache.find((r) => r.name === name))
     .filter((r): r is Role => Boolean(r))
 }
@@ -151,7 +164,8 @@ export async function handleRoleButton(i: ButtonInteraction) {
     return
   }
 
-  const wanted = i.customId === TRYOUT ? TRYOUT_ROLE : i.customId.slice(PREFIX.length)
+  const wanted =
+    i.customId === TRYOUT ? TRYOUT_ROLE : i.customId === GAMERS ? GAMERS_ROLE : i.customId.slice(PREFIX.length)
   const role = selfAssignable(guild).find((r) => r.name === wanted)
 
   if (!role) {
@@ -172,6 +186,16 @@ export async function handleRoleButton(i: ButtonInteraction) {
   const had = member.roles.cache.has(role.id)
   if (had) await member.roles.remove(role, 'Self-assigned from #get-roles')
   else await member.roles.add(role, 'Self-assigned from #get-roles')
+
+  if (i.customId === GAMERS) {
+    await i.reply({
+      content: had
+        ? 'Dropped **Gamers** — no more game pings.'
+        : "You've got **Gamers**. You'll get pinged when a flex, Clash or ARAM lobby needs people.",
+      flags: MessageFlags.Ephemeral,
+    })
+    return
+  }
 
   if (i.customId === TRYOUT) {
     if (had) {

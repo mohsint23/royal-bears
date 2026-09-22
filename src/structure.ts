@@ -122,6 +122,8 @@ export const ROLES: RoleDef[] = [
   { name: 'Mid', mentionable: true },
   { name: 'ADC', mentionable: true },
   { name: 'Support', mentionable: true },
+  // Opt-in ping for casual games: flex, Clash, ARAM, whatever is going.
+  { name: 'Gamers', mentionable: true },
 
   // Last on purpose: lowest hoisted role, so bots sit under every human group.
   { name: ROLE.bots, color: 0x5865f2, hoist: true },
