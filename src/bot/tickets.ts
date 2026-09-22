@@ -26,7 +26,7 @@ import {
   type TextChannel,
 } from 'discord.js'
 import { config, ROLE_NAMES, STAFF_ROLES } from './config.js'
-import { accounts, riotId, tickets, ticketAnswers, type Ticket } from './db.js'
+import { accounts, riotId, tickets, ticketAnswers, type Account, type Ticket } from './db.js'
 import { baseEmbed, GOLD, GREEN, RED, opggLink } from './format.js'
 import {
   channelName,
@@ -166,16 +166,18 @@ export async function handleTicketMessage(message: Message) {
   await postSummary(message.channel as TextChannel, tickets.byChannel(ticket.channel_id)!)
 }
 
-async function postSummary(channel: TextChannel, ticket: Ticket) {
-  const guild = channel.guild
-  const main = accounts.mainFor(ticket.discord_id)
-
-  const embed = baseEmbed()
+/** The card staff read. Exported so preview.ts can render it without Discord. */
+export function summaryEmbed(ticket: Ticket, main: Account | undefined) {
+  return baseEmbed()
     .setColor(GOLD)
     .setTitle('Tryout application')
     .setDescription(`<@${ticket.discord_id}>`)
     .addFields(
-      ...QUESTIONS.map((q) => ({ name: q.label, value: ticket[q.key] || '—', inline: q.key.endsWith('_rank') || q.key.endsWith('_role') })),
+      ...QUESTIONS.map((q) => ({
+        name: q.label,
+        value: ticket[q.key] || '—',
+        inline: q.key.endsWith('_rank') || q.key.endsWith('_role'),
+      })),
       {
         name: 'op.gg',
         value: main
@@ -183,28 +185,30 @@ async function postSummary(channel: TextChannel, ticket: Ticket) {
           : 'Not linked — they can run `/register` to add it',
       },
     )
-
-  const reviewers = REVIEWER_ROLES.map((name) => guild.roles.cache.find((r) => r.name === name))
-    .filter((r): r is NonNullable<typeof r> => Boolean(r))
-
-  const sent = await channel.send({
-    content: `${reviewers.map((r) => `<@&${r.id}>`).join(' ')} application in from <@${ticket.discord_id}>.`.trim(),
-    embeds: [embed],
-    components: [buttons()],
-    allowedMentions: { roles: reviewers.map((r) => r.id), users: [ticket.discord_id] },
-  })
-  tickets.setSummary(ticket.channel_id, sent.id)
-
-  await channel.send(`Done <@${ticket.discord_id}> — a captain will reply here in a few days.`)
 }
 
-function buttons() {
-  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+export const summaryButtons = () =>
+  new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder().setCustomId(BUTTON.trialling).setLabel('Trialling').setEmoji('🎯').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(BUTTON.accept).setLabel('Accept').setEmoji('✅').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId(BUTTON.decline).setLabel('Decline').setEmoji('🚫').setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId(BUTTON.close).setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary),
   )
+
+async function postSummary(channel: TextChannel, ticket: Ticket) {
+  const guild = channel.guild
+  const reviewers = REVIEWER_ROLES.map((name) => guild.roles.cache.find((r) => r.name === name))
+    .filter((r): r is NonNullable<typeof r> => Boolean(r))
+
+  const sent = await channel.send({
+    content: `${reviewers.map((r) => `<@&${r.id}>`).join(' ')} application in from <@${ticket.discord_id}>.`.trim(),
+    embeds: [summaryEmbed(ticket, accounts.mainFor(ticket.discord_id))],
+    components: [summaryButtons()],
+    allowedMentions: { roles: reviewers.map((r) => r.id), users: [ticket.discord_id] },
+  })
+  tickets.setSummary(ticket.channel_id, sent.id)
+
+  await channel.send(`Done <@${ticket.discord_id}> — a captain will reply here in a few days.`)
 }
 
 // ---------------------------------------------------------------------------
