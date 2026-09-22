@@ -17,9 +17,7 @@ const LIST = [
   { key: 'peak_rank', label: 'Peak rank', kind: 'text', prompt: 'Peak rank?' },
   { key: 'current_rank', label: 'Current rank', kind: 'text', prompt: 'Current rank?' },
   { key: 'main_role', label: 'Main role', kind: 'text', prompt: 'Main role?' },
-  { key: 'main_champs', label: 'Main-role champs', kind: 'text', prompt: 'Champs for that role? Best first.' },
-  { key: 'secondary_roles', label: 'Secondary role(s)', kind: 'text', prompt: 'Secondary role(s)? Or *none*.' },
-  { key: 'secondary_champs', label: 'Secondary champs', kind: 'text', prompt: 'Champs for those roles?' },
+  { key: 'secondary_roles', label: 'Other roles', kind: 'text', prompt: 'Are you open to playing any other roles? Which, or *no*.' },
   {
     key: 'tier_list',
     label: 'Tier list',
@@ -31,7 +29,7 @@ const LIST = [
 export type QuestionKey = (typeof LIST)[number]['key']
 export type Question = { key: QuestionKey; label: string; kind: QuestionKind; prompt: string }
 
-/** Prompts carry their own "n/10" so the count never drifts from the list. */
+/** Prompts carry their own "n/8" so the count never drifts from the list. */
 export const QUESTIONS: readonly Question[] = LIST.map((q, n) => ({
   ...q,
   prompt: `**${n + 1}/${LIST.length}** ${q.prompt}`,

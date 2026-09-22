@@ -2,14 +2,14 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { QUESTIONS, nextQuestion, isComplete, channelName, nudgeDue, parseRiotId, parseTeam } from './ticketFlow.js'
 
-test('ten questions in the agreed order, numbered, image last', () => {
+test('eight questions in the agreed order, numbered, image last', () => {
   assert.deepEqual(
     QUESTIONS.map((q) => q.key),
-    ['riot_id', 'year', 'team', 'peak_rank', 'current_rank', 'main_role', 'main_champs', 'secondary_roles', 'secondary_champs', 'tier_list'],
+    ['riot_id', 'year', 'team', 'peak_rank', 'current_rank', 'main_role', 'secondary_roles', 'tier_list'],
   )
-  assert.ok(QUESTIONS[0]!.prompt.startsWith('**1/10**'))
-  assert.ok(QUESTIONS[9]!.prompt.startsWith('**10/10**'))
-  assert.equal(QUESTIONS[9]!.kind, 'image')
+  assert.ok(QUESTIONS[0]!.prompt.startsWith('**1/8**'))
+  assert.ok(QUESTIONS[7]!.prompt.startsWith('**8/8**'))
+  assert.equal(QUESTIONS[7]!.kind, 'image')
   assert.equal(QUESTIONS[2]!.kind, 'team')
 })
 

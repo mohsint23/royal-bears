@@ -95,8 +95,7 @@ const sampleTicket: Ticket = {
   created_at: 0, last_activity: 0, nudged_at: null, closed_at: null,
   riot_id: 'draatini#EUW', year: '2nd', team: 'A and B', tier_list: null,
   peak_rank: 'Emerald 1, last split', current_rank: 'Emerald 3',
-  main_role: 'Mid', main_champs: 'Ahri, Syndra, Orianna, Taliyah',
-  secondary_roles: 'Support', secondary_champs: 'Nautilus, Leona',
+  main_role: 'Mid', secondary_roles: 'Support, Top if needed',
 }
 const sampleAnswers = QUESTIONS.map((q) => sampleTicket[q.key]!)
 const ticketBody =

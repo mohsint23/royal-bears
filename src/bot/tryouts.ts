@@ -28,7 +28,7 @@ export function tryoutsEmbeds(ref: Ref): EmbedBuilder[] {
       .setDescription(
         `**1.** Hit **I'm here to trial** in ${ref('get-roles')}\n` +
           '**2.** Press **📩 Open a tryout ticket** below\n' +
-          '**3.** Answer ten quick questions — Riot ID, year, team, ranks, roles, champs, tier list\n' +
+          '**3.** Answer eight quick questions — Riot ID, year, team, ranks, roles, tier list\n' +
           '**4.** A captain replies in your ticket within a few days',
       ),
 
