@@ -8,7 +8,7 @@
 
 import { ChannelType, Client, GatewayIntentBits, type TextChannel } from 'discord.js'
 import { config } from './bot/config.js'
-import { tryoutsEmbed } from './bot/tryouts.js'
+import { tryoutsEmbeds } from './bot/tryouts.js'
 import { panelRow } from './bot/tickets.js'
 
 const channelName = process.argv[2] || 'tryout-info'
@@ -34,17 +34,23 @@ client.once('clientReady', async (ready) => {
       return found ? `<#${found.id}>` : `#${name}`
     }
 
-    const body = { embeds: [tryoutsEmbed(ref)], components: [panelRow()] }
+    // One message per embed, the button on the last. Existing bot messages are
+    // edited in order, missing ones sent, leftovers deleted.
+    const embeds = tryoutsEmbeds(ref)
+    const bodies = embeds.map((embed, n) =>
+      n === embeds.length - 1 ? { embeds: [embed], components: [panelRow()] } : { embeds: [embed], components: [] },
+    )
     const recent = await channel.messages.fetch({ limit: 50 })
-    const mine = recent.find((m) => m.author.id === ready.user.id)
+    const mine = [...recent.filter((m) => m.author.id === ready.user.id).values()].sort(
+      (a, b) => a.createdTimestamp - b.createdTimestamp,
+    )
 
-    if (mine) {
-      await mine.edit(body)
-      console.log(`Updated the trial explainer in #${channel.name}.`)
-    } else {
-      await channel.send(body)
-      console.log(`Posted the trial explainer in #${channel.name}.`)
+    for (const [n, body] of bodies.entries()) {
+      if (mine[n]) await mine[n]!.edit(body)
+      else await channel.send(body)
     }
+    for (const extra of mine.slice(bodies.length)) await extra.delete()
+    console.log(`#${channel.name}: ${bodies.length} messages in place.`)
   } catch (err) {
     console.error('Failed:', err)
     process.exitCode = 1
