@@ -23,6 +23,7 @@ import {
 } from 'discord.js'
 import { POSITIONS, type Position } from './config.js'
 import { baseEmbed, GOLD } from './format.js'
+import { openTicket } from './tickets.js'
 
 const PREFIX = 'role:'
 const CLEAR = 'role:__clear'
@@ -89,9 +90,9 @@ export function rolesEmbed(ref: (name: string) => string) {
       {
         name: '🎯 Here to trial?',
         value:
-          `Hit **I'm here to trial** and you're in — it gets you the Tryout role, which opens ` +
-          `${ref('tryout-chat')} and the Tryout Lobby. Read ${ref('tryout-info')} first, then ` +
-          `post whenever you're ready. Changed your mind? Tap it again.`,
+          `Hit **I'm here to trial** and you're in — it gets you the Tryout role, opens ` +
+          `${ref('tryout-chat')} and the Tryout Lobby, and the bot opens a private ticket where it ` +
+          `asks you a few questions. Read ${ref('tryout-info')} first. Changed your mind? Tap it again.`,
       },
       {
         name: 'Rank roles sort themselves out',
@@ -173,13 +174,28 @@ export async function handleRoleButton(i: ButtonInteraction) {
   else await member.roles.add(role, 'Self-assigned from #get-roles')
 
   if (i.customId === TRYOUT) {
-    await i.reply({
-      content: had
-        ? "Taken **Tryout** back off. No hard feelings — grab it again whenever."
-        : "You're down as trialling. **Tryout** is yours, so the tryout channels are open — " +
-          'have a read of the info channel and post when you are ready.',
-      flags: MessageFlags.Ephemeral,
-    })
+    if (had) {
+      await i.reply({
+        content: 'Taken **Tryout** back off. No hard feelings — grab it again whenever.',
+        flags: MessageFlags.Ephemeral,
+      })
+      return
+    }
+    // Making the channel takes a moment; defer so the button does not time out.
+    await i.deferReply({ flags: MessageFlags.Ephemeral })
+    try {
+      const { channel, created } = await openTicket(guild, member)
+      await i.editReply({
+        content: created
+          ? `You're down as trialling. Your tryout ticket is open: ${channel} — answer the questions there when you're ready.`
+          : `**Tryout** is yours again. Your ticket is still open: ${channel}.`,
+      })
+    } catch (err) {
+      console.error('[tickets] open from button:', err)
+      await i.editReply({
+        content: "Got you the **Tryout** role, but I couldn't open your ticket — ping a captain and they'll sort it.",
+      })
+    }
     return
   }
 
