@@ -1,17 +1,26 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { QUESTIONS, nextQuestion, isComplete, channelName, nudgeDue } from './ticketFlow.js'
+import { QUESTIONS, nextQuestion, isComplete, channelName, nudgeDue, parseRiotId } from './ticketFlow.js'
 
-test('six questions in the agreed order', () => {
+test('eight questions in the agreed order, numbered', () => {
   assert.deepEqual(
     QUESTIONS.map((q) => q.key),
-    ['peak_rank', 'current_rank', 'main_role', 'main_champs', 'secondary_roles', 'secondary_champs'],
+    ['riot_id', 'year', 'peak_rank', 'current_rank', 'main_role', 'main_champs', 'secondary_roles', 'secondary_champs'],
   )
+  assert.ok(QUESTIONS[0]!.prompt.startsWith('**1/8**'))
+  assert.ok(QUESTIONS[7]!.prompt.startsWith('**8/8**'))
+})
+
+test('parseRiotId accepts Name#TAG only', () => {
+  assert.deepEqual(parseRiotId(' Faker #KR1 '), { gameName: 'Faker', tagLine: 'KR1' })
+  assert.equal(parseRiotId('Faker'), undefined)
+  assert.equal(parseRiotId('a#b#c'), undefined)
+  assert.equal(parseRiotId('#EUW'), undefined)
 })
 
 test('nextQuestion walks the list and stops at the end', () => {
-  assert.equal(nextQuestion({})?.key, 'peak_rank')
-  assert.equal(nextQuestion({ peak_rank: 'Gold' })?.key, 'current_rank')
+  assert.equal(nextQuestion({})?.key, 'riot_id')
+  assert.equal(nextQuestion({ riot_id: 'a#b', year: '2nd' })?.key, 'peak_rank')
   const all = Object.fromEntries(QUESTIONS.map((q) => [q.key, 'x']))
   assert.equal(nextQuestion(all), undefined)
   assert.equal(isComplete(all), true)

@@ -40,12 +40,7 @@ export async function rosterMembers(guild: Guild, team: TeamKey): Promise<GuildM
   return [...role.members.values()].filter((m) => !m.user.bot)
 }
 
-/** Splits "Faker#KR1" into its two halves, tolerating stray spaces. */
-export function parseRiotId(input: string): { gameName: string; tagLine: string } | undefined {
-  const [name, tag, ...rest] = input.trim().split('#')
-  if (!name || !tag || rest.length) return undefined
-  return { gameName: name.trim(), tagLine: tag.trim() }
-}
+export { parseRiotId } from './ticketFlow.js'
 
 export async function replyError(i: ChatInputCommandInteraction, message: string) {
   const body = { content: message, flags: MessageFlags.Ephemeral } as const

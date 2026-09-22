@@ -27,7 +27,7 @@ export function tryoutsEmbeds(ref: Ref): EmbedBuilder[] {
       .setDescription(
         `**1.** Hit **I'm here to trial** in ${ref('get-roles')}\n` +
           '**2.** Press **📩 Open a tryout ticket** below\n' +
-          '**3.** Answer six quick questions — ranks, roles, champs\n' +
+          '**3.** Answer eight quick questions — Riot ID, year, ranks, roles, champs\n' +
           '**4.** A captain replies in your ticket within a few days',
       ),
 
@@ -38,7 +38,7 @@ export function tryoutsEmbeds(ref: Ref): EmbedBuilder[] {
         '• Rank is the least of it. We want people who talk, take feedback, and show up.\n' +
           '• Your ticket is private — just you and the captains.\n' +
           '• A no means *not this term*. Apply again next term.\n' +
-          `• Run \`/register\` first and your op.gg goes on your card.`,
+          '• Your Riot ID becomes an op.gg link on your card, so get the tag right.',
       ),
   ]
 }

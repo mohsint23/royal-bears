@@ -108,6 +108,8 @@ db.exec(`
     discord_id         TEXT NOT NULL,
     username           TEXT NOT NULL,
     status             TEXT NOT NULL DEFAULT 'open',
+    riot_id            TEXT,
+    year               TEXT,
     peak_rank          TEXT,
     current_rank       TEXT,
     main_role          TEXT,
@@ -122,6 +124,14 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS tryout_tickets_user ON tryout_tickets (discord_id, status);
 `)
+
+// Tickets gained two questions after the table first shipped.
+{
+  const have = new Set((db.pragma('table_info(tryout_tickets)') as { name: string }[]).map((c) => c.name))
+  for (const col of ['riot_id', 'year']) {
+    if (!have.has(col)) db.exec(`ALTER TABLE tryout_tickets ADD COLUMN ${col} TEXT`)
+  }
+}
 
 // Accounts used to be one row per Discord user. Carry those across as mains.
 const hasOldPlayers = db
@@ -410,6 +420,9 @@ export const tickets = {
       .get(discordId) as Ticket | undefined,
 
   active: () => db.prepare(`SELECT * FROM tryout_tickets WHERE status != 'closed'`).all() as Ticket[],
+
+  /** Every application ever, oldest first — closed ones keep their answers. */
+  all: () => db.prepare('SELECT * FROM tryout_tickets ORDER BY created_at ASC').all() as Ticket[],
 
   answer(channelId: string, key: QuestionKey, value: string) {
     // The column name is interpolated, so it must come from the fixed list.

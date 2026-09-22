@@ -2,7 +2,7 @@
  * Tryout tickets.
  *
  * Pressing the button under #tryout-info opens a private #tryout-<name>
- * channel where the bot asks six questions one at a time, then posts a summary card with staff
+ * channel where the bot asks eight questions one at a time, then posts a summary card with staff
  * buttons. The questions and naming rules live in ticketFlow.ts; this file is
  * the Discord side: channels, permissions, messages, buttons.
  *
@@ -33,6 +33,7 @@ import {
   MAX_ANSWER,
   nextQuestion,
   nudgeDue,
+  parseRiotId,
   QUESTIONS,
   type TicketStatus,
 } from './ticketFlow.js'
@@ -108,7 +109,7 @@ async function createTicket(guild: Guild, member: GuildMember): Promise<TextChan
   tickets.create({ channel_id: channel.id, discord_id: member.id, username: member.user.username })
 
   await channel.send(
-    `<@${member.id}> welcome — just you and the captains in here. Six quick questions, one message each.\n${QUESTIONS[0].prompt}`,
+    `<@${member.id}> welcome — just you and the captains in here. Eight quick questions, one message each.\n${QUESTIONS[0].prompt}`,
   )
   return channel
 }
@@ -154,6 +155,11 @@ export async function handleTicketMessage(message: Message) {
     return
   }
 
+  if (question.key === 'riot_id' && !parseRiotId(text)) {
+    await message.reply('Needs to be `Name#TAG` — the bit after the # is on your Riot profile.')
+    return
+  }
+
   tickets.answer(ticket.channel_id, question.key, text)
   answers[question.key] = text
   await message.react('✅').catch(() => {})
@@ -166,6 +172,19 @@ export async function handleTicketMessage(message: Message) {
   await postSummary(message.channel as TextChannel, tickets.byChannel(ticket.channel_id)!)
 }
 
+/** The Riot ID they typed, as an op.gg link; falls back to their /register main. */
+export function opggUrl(typed: string | null, main: Account | undefined): { label: string; url: string } | undefined {
+  const parsed = typed ? parseRiotId(typed) : undefined
+  if (parsed) return { label: `${parsed.gameName}#${parsed.tagLine}`, url: opggLink(parsed.gameName, parsed.tagLine) }
+  if (main) return { label: riotId(main), url: opggLink(main.game_name, main.tag_line) }
+  return undefined
+}
+
+function opggField(typed: string | null, main: Account | undefined): string {
+  const link = opggUrl(typed, main)
+  return link ? `[${link.label}](${link.url})` : '—'
+}
+
 /** The card staff read. Exported so preview.ts can render it without Discord. */
 export function summaryEmbed(ticket: Ticket, main: Account | undefined) {
   return baseEmbed()
@@ -174,16 +193,10 @@ export function summaryEmbed(ticket: Ticket, main: Account | undefined) {
     .setDescription(`<@${ticket.discord_id}>`)
     .addFields(
       ...QUESTIONS.map((q) => ({
-        name: q.label,
-        value: ticket[q.key] || '—',
-        inline: q.key.endsWith('_rank') || q.key.endsWith('_role'),
+        name: q.key === 'riot_id' ? 'op.gg' : q.label,
+        value: q.key === 'riot_id' ? opggField(ticket.riot_id, main) : ticket[q.key] || '—',
+        inline: q.key === 'year' || q.key.endsWith('_rank') || q.key.endsWith('_role'),
       })),
-      {
-        name: 'op.gg',
-        value: main
-          ? `[${riotId(main)}](${opggLink(main.game_name, main.tag_line)})`
-          : 'Not linked — they can run `/register` to add it',
-      },
     )
 }
 

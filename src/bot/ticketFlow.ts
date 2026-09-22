@@ -5,41 +5,25 @@
  * tested without a bot token. tickets.ts does the talking.
  */
 
-export const QUESTIONS = [
-  {
-    key: 'peak_rank',
-    label: 'Peak rank',
-    prompt: '**1/6** Peak rank?',
-  },
-  {
-    key: 'current_rank',
-    label: 'Current rank',
-    prompt: '**2/6** Current rank?',
-  },
-  {
-    key: 'main_role',
-    label: 'Main role',
-    prompt: '**3/6** Main role?',
-  },
-  {
-    key: 'main_champs',
-    label: 'Main-role champs',
-    prompt: '**4/6** Champs for that role? Best first.',
-  },
-  {
-    key: 'secondary_roles',
-    label: 'Secondary role(s)',
-    prompt: '**5/6** Secondary role(s)? Or *none*.',
-  },
-  {
-    key: 'secondary_champs',
-    label: 'Secondary champs',
-    prompt: '**6/6** Champs for those roles?',
-  },
+const LIST = [
+  { key: 'riot_id', label: 'Riot ID', prompt: 'Riot ID? Like `Name#TAG` — it goes on your card as an op.gg link.' },
+  { key: 'year', label: 'Year', prompt: 'What year are you in at uni? (1st, 2nd, 3rd, 4th, masters, PhD…)' },
+  { key: 'peak_rank', label: 'Peak rank', prompt: 'Peak rank?' },
+  { key: 'current_rank', label: 'Current rank', prompt: 'Current rank?' },
+  { key: 'main_role', label: 'Main role', prompt: 'Main role?' },
+  { key: 'main_champs', label: 'Main-role champs', prompt: 'Champs for that role? Best first.' },
+  { key: 'secondary_roles', label: 'Secondary role(s)', prompt: 'Secondary role(s)? Or *none*.' },
+  { key: 'secondary_champs', label: 'Secondary champs', prompt: 'Champs for those roles?' },
 ] as const
 
-export type QuestionKey = (typeof QUESTIONS)[number]['key']
-export type Question = (typeof QUESTIONS)[number]
+export type QuestionKey = (typeof LIST)[number]['key']
+export type Question = { key: QuestionKey; label: string; prompt: string }
+
+/** Prompts carry their own "n/8" so the count never drifts from the list. */
+export const QUESTIONS: readonly Question[] = LIST.map((q, n) => ({
+  ...q,
+  prompt: `**${n + 1}/${LIST.length}** ${q.prompt}`,
+}))
 export type Answers = Partial<Record<QuestionKey, string>>
 export type TicketStatus = 'open' | 'trialling' | 'accepted' | 'declined' | 'closed'
 
@@ -74,3 +58,10 @@ export function nudgeDue(
 
 /** Answers are free text; keep them to one card field each. */
 export const MAX_ANSWER = 500
+
+/** "Name#TAG" → its halves, tolerating stray spaces. Undefined when it is not one. */
+export function parseRiotId(input: string): { gameName: string; tagLine: string } | undefined {
+  const [name, tag, ...rest] = input.trim().split('#')
+  if (!name?.trim() || !tag?.trim() || rest.length) return undefined
+  return { gameName: name.trim(), tagLine: tag.trim() }
+}
