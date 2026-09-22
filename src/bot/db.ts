@@ -9,6 +9,7 @@ import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import Database from 'better-sqlite3'
 import { config } from './config.js'
+import { QUESTIONS, type Answers, type QuestionKey, type TicketStatus } from './ticketFlow.js'
 
 mkdirSync(dirname(config.databasePath), { recursive: true })
 
@@ -99,6 +100,27 @@ db.exec(`
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  -- One tryout ticket per applicant. Answers land one column at a time so a
+  -- restart mid-questionnaire picks up where it left off.
+  CREATE TABLE IF NOT EXISTS tryout_tickets (
+    channel_id         TEXT PRIMARY KEY,
+    discord_id         TEXT NOT NULL,
+    username           TEXT NOT NULL,
+    status             TEXT NOT NULL DEFAULT 'open',
+    peak_rank          TEXT,
+    current_rank       TEXT,
+    main_role          TEXT,
+    main_champs        TEXT,
+    secondary_roles    TEXT,
+    secondary_champs   TEXT,
+    summary_message_id TEXT,
+    created_at         INTEGER NOT NULL,
+    last_activity      INTEGER NOT NULL,
+    nudged_at          INTEGER,
+    closed_at          INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS tryout_tickets_user ON tryout_tickets (discord_id, status);
 `)
 
 // Accounts used to be one row per Discord user. Carry those across as mains.
@@ -345,4 +367,65 @@ export const scrims = {
   answers: (messageId: string) =>
     db.prepare('SELECT discord_id, answer FROM scrim_rsvp WHERE message_id = ?')
       .all(messageId) as { discord_id: string; answer: string }[],
+}
+
+export type Ticket = {
+  channel_id: string
+  discord_id: string
+  username: string
+  status: TicketStatus
+  summary_message_id: string | null
+  created_at: number
+  last_activity: number
+  nudged_at: number | null
+  closed_at: number | null
+} & Record<QuestionKey, string | null>
+
+/** The answered questions of a ticket, in the shape ticketFlow works with. */
+export function ticketAnswers(t: Ticket): Answers {
+  const out: Answers = {}
+  for (const q of QUESTIONS) {
+    const value = t[q.key]
+    if (value) out[q.key] = value
+  }
+  return out
+}
+
+const ANSWER_COLUMNS = new Set<string>(QUESTIONS.map((q) => q.key))
+
+export const tickets = {
+  create: (row: { channel_id: string; discord_id: string; username: string }) =>
+    db.prepare(`
+      INSERT INTO tryout_tickets (channel_id, discord_id, username, created_at, last_activity)
+      VALUES (@channel_id, @discord_id, @username, @now, @now)
+    `).run({ ...row, now: Date.now() }),
+
+  byChannel: (channelId: string) =>
+    db.prepare('SELECT * FROM tryout_tickets WHERE channel_id = ?').get(channelId) as Ticket | undefined,
+
+  /** The one live ticket a person may have. */
+  activeFor: (discordId: string) =>
+    db
+      .prepare(`SELECT * FROM tryout_tickets WHERE discord_id = ? AND status != 'closed' ORDER BY created_at DESC LIMIT 1`)
+      .get(discordId) as Ticket | undefined,
+
+  active: () => db.prepare(`SELECT * FROM tryout_tickets WHERE status != 'closed'`).all() as Ticket[],
+
+  answer(channelId: string, key: QuestionKey, value: string) {
+    // The column name is interpolated, so it must come from the fixed list.
+    if (!ANSWER_COLUMNS.has(key)) throw new Error(`Not a question: ${key}`)
+    db.prepare(`UPDATE tryout_tickets SET ${key} = ?, last_activity = ? WHERE channel_id = ?`)
+      .run(value, Date.now(), channelId)
+  },
+
+  setSummary: (channelId: string, messageId: string) =>
+    db.prepare('UPDATE tryout_tickets SET summary_message_id = ? WHERE channel_id = ?').run(messageId, channelId),
+
+  setStatus: (channelId: string, status: TicketStatus) =>
+    db
+      .prepare(`UPDATE tryout_tickets SET status = @status, closed_at = CASE WHEN @status = 'closed' THEN @now ELSE closed_at END WHERE channel_id = @channelId`)
+      .run({ status, now: Date.now(), channelId }),
+
+  markNudged: (channelId: string) =>
+    db.prepare('UPDATE tryout_tickets SET nudged_at = ? WHERE channel_id = ?').run(Date.now(), channelId),
 }
