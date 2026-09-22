@@ -23,7 +23,6 @@ import {
 } from 'discord.js'
 import { POSITIONS, type Position } from './config.js'
 import { baseEmbed, GOLD } from './format.js'
-import { openTicket } from './tickets.js'
 
 const PREFIX = 'role:'
 const CLEAR = 'role:__clear'
@@ -103,9 +102,9 @@ export function rolesEmbed(ref: (name: string) => string) {
       {
         name: '🎯 Here to trial?',
         value:
-          `Hit **I'm here to trial** and you're in — it gets you the Tryout role, opens ` +
-          `${ref('tryout-chat')} and the Tryout Lobby, and the bot opens a private ticket where it ` +
-          `asks you a few questions. Read ${ref('tryout-info')} first. Changed your mind? Tap it again.`,
+          `Hit **I'm here to trial** and you're in — it gets you the Tryout role, which opens ` +
+          `${ref('tryout-chat')} and the Tryout Lobby. Then open your ticket from ${ref('tryout-info')}. ` +
+          'Changed your mind? Tap it again.',
       },
       {
         name: 'Rank roles sort themselves out',
@@ -198,28 +197,14 @@ export async function handleRoleButton(i: ButtonInteraction) {
   }
 
   if (i.customId === TRYOUT) {
-    if (had) {
-      await i.reply({
-        content: 'Taken **Tryout** back off. No hard feelings — grab it again whenever.',
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
-    // Making the channel takes a moment; defer so the button does not time out.
-    await i.deferReply({ flags: MessageFlags.Ephemeral })
-    try {
-      const { channel, created } = await openTicket(guild, member)
-      await i.editReply({
-        content: created
-          ? `You're down as trialling. Your tryout ticket is open: ${channel} — answer the questions there when you're ready.`
-          : `**Tryout** is yours again. Your ticket is still open: ${channel}.`,
-      })
-    } catch (err) {
-      console.error('[tickets] open from button:', err)
-      await i.editReply({
-        content: "Got you the **Tryout** role, but I couldn't open your ticket — ping a captain and they'll sort it.",
-      })
-    }
+    const info = guild.channels.cache.find((c) => c.name === 'tryout-info')
+    await i.reply({
+      content: had
+        ? 'Taken **Tryout** back off. No hard feelings — grab it again whenever.'
+        : `You're down as trialling. **Tryout** is yours — head to ${info ?? '#tryout-info'} and hit ` +
+          '**Open a tryout ticket** when you are ready.',
+      flags: MessageFlags.Ephemeral,
+    })
     return
   }
 

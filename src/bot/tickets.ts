@@ -1,8 +1,8 @@
 /**
  * Tryout tickets.
  *
- * Taking the Tryout role opens a private #tryout-<name> channel where the bot
- * asks six questions one at a time, then posts a summary card with staff
+ * Pressing the button under #tryout-info opens a private #tryout-<name>
+ * channel where the bot asks six questions one at a time, then posts a summary card with staff
  * buttons. The questions and naming rules live in ticketFlow.ts; this file is
  * the Discord side: channels, permissions, messages, buttons.
  *
@@ -43,6 +43,7 @@ export const TRYOUT_ROLE = 'Tryout'
 
 const PREFIX = 'ticket:'
 const BUTTON = {
+  open: `${PREFIX}open`,
   trialling: `${PREFIX}trialling`,
   accept: `${PREFIX}accept`,
   decline: `${PREFIX}decline`,
@@ -60,9 +61,8 @@ export const isTicketButton = (customId: string) => customId.startsWith(PREFIX)
 // Opening
 
 /**
- * The same person can trigger an open twice in a row (the role button adds
- * the role, which also fires GuildMemberUpdate). Second caller waits on the
- * first instead of making a second channel.
+ * Two quick presses of the button must not make two channels: the second
+ * caller waits on the first and gets the same channel back.
  */
 const inFlight = new Map<string, Promise<TextChannel>>()
 
@@ -222,8 +222,40 @@ const DM: Record<'accepted' | 'declined', string> = {
     'Playing in #looking-for-game is the fastest way to get noticed.',
 }
 
+/** The button under the #tryout-info explainer. One per person: pressing it again links the open ticket. */
+export const panelRow = () =>
+  new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder().setCustomId(BUTTON.open).setLabel('Open a tryout ticket').setEmoji('📩').setStyle(ButtonStyle.Success),
+  )
+
+async function handleOpenButton(i: ButtonInteraction<'cached'>) {
+  const member = i.member
+  if (!member.roles.cache.some((r) => r.name === TRYOUT_ROLE)) {
+    const getRoles = i.guild.channels.cache.find((c) => c.name === 'get-roles')
+    await i.reply({
+      content: `Grab the **Tryout** role first — hit **I'm here to trial** in ${getRoles ?? '#get-roles'}, then come back and press this.`,
+      flags: MessageFlags.Ephemeral,
+    })
+    return
+  }
+  await i.deferReply({ flags: MessageFlags.Ephemeral })
+  try {
+    const { channel, created } = await openTicket(i.guild, member)
+    await i.editReply({
+      content: created ? `Your ticket is open: ${channel}. Answer the questions there.` : `You already have one open: ${channel}.`,
+    })
+  } catch (err) {
+    console.error('[tickets] open from panel:', err)
+    await i.editReply({ content: "Couldn't open your ticket — ping a captain and they'll sort it." })
+  }
+}
+
 export async function handleTicketButton(i: ButtonInteraction) {
   if (!i.inCachedGuild()) return
+  if (i.customId === BUTTON.open) {
+    await handleOpenButton(i)
+    return
+  }
   if (!isStaff(i.member)) {
     await i.reply({ content: 'Only staff and captains can do that.', flags: MessageFlags.Ephemeral })
     return

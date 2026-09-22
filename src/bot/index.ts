@@ -23,10 +23,8 @@ import {
   handleTicketButton,
   handleTicketMessage,
   isTicketButton,
-  openTicket,
   resumeTickets,
   startTicketNudges,
-  TRYOUT_ROLE,
 } from './tickets.js'
 import { loadChampions } from './ddragon.js'
 import { applySeed } from './seed.js'
@@ -110,15 +108,6 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 
 client.on(Events.MessageCreate, (message) => {
   handleTicketMessage(message).catch((err) => console.error('[tickets] message:', err))
-})
-
-// A captain dragging the Tryout role onto someone by hand should open a ticket
-// just like the button does. openTicket de-duplicates when both fire.
-client.on(Events.GuildMemberUpdate, (before, after) => {
-  const had = before.roles.cache.some((r) => r.name === TRYOUT_ROLE)
-  const has = after.roles.cache.some((r) => r.name === TRYOUT_ROLE)
-  if (had || !has || after.user.bot) return
-  openTicket(after.guild, after).catch((err) => console.error('[tickets] open on role grant:', err))
 })
 
 // Without a listener, a gateway error (a rate-limited member fetch, a dropped

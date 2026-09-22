@@ -4,9 +4,10 @@ Replaces the forum-based application flow with a private ticket per applicant.
 
 ## Flow
 
-1. Someone clicks **I'm here to trial** in `#get-roles`. The button handler in
-   `roles.ts` already assigns the Tryout role; it now also opens a ticket. A
-   `GuildMemberUpdate` listener opens one when the role is added by hand.
+1. Someone with the Tryout role presses **Open a tryout ticket** under the
+   `#tryout-info` explainer (the panel pattern Ticket Tool and TicketsBot use).
+   Without the role, the button points them at `#get-roles`. Changed
+   2026-09-22 from auto-open on role grant, so the role alone makes no channels.
 2. The bot creates `#tryout-<username>` under 🎯 TRYOUTS, visible only to the
    applicant plus Staff, LoL Officer, Coach, Team A Captain and Team B Captain.
    If the applicant already has an open ticket, they are pointed at it instead.

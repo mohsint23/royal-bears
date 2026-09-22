@@ -19,10 +19,10 @@ export function tryoutsEmbed(ref: (name: string) => string) {
       {
         name: 'Getting in',
         value:
-          `Hit **I'm here to trial** in ${ref('get-roles')}. That's it — you get the Tryout role ` +
-          `straight away, which opens ${ref('tryout-chat')} and the Tryout Lobby, and the bot opens ` +
-          'a private **#tryout-you** channel that only you and the captains can see. ' +
-          'Nobody has to approve you first.',
+          `1. Hit **I'm here to trial** in ${ref('get-roles')} — that's the Tryout role, which opens ` +
+          `${ref('tryout-chat')} and the Tryout Lobby.\n` +
+          '2. Press **📩 Open a tryout ticket** under this message. You get a private **#tryout-you** ' +
+          'channel only you and the captains can see. Nobody has to approve you first.',
       },
       {
         name: 'Then answer six questions',

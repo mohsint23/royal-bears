@@ -1,5 +1,5 @@
 /**
- * Puts the trial explainer in #tryout-info.
+ * Puts the trial explainer, with its Open-a-ticket button, in #tryout-info.
  *
  *   npm run post-tryouts
  *
@@ -9,6 +9,7 @@
 import { ChannelType, Client, GatewayIntentBits, type TextChannel } from 'discord.js'
 import { config } from './bot/config.js'
 import { tryoutsEmbed } from './bot/tryouts.js'
+import { panelRow } from './bot/tickets.js'
 
 const channelName = process.argv[2] || 'tryout-info'
 const client = new Client({ intents: [GatewayIntentBits.Guilds] })
@@ -33,7 +34,7 @@ client.once('clientReady', async (ready) => {
       return found ? `<#${found.id}>` : `#${name}`
     }
 
-    const body = { embeds: [tryoutsEmbed(ref)] }
+    const body = { embeds: [tryoutsEmbed(ref)], components: [panelRow()] }
     const recent = await channel.messages.fetch({ limit: 50 })
     const mine = recent.find((m) => m.author.id === ready.user.id)
 

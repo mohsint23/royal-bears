@@ -87,9 +87,9 @@ to that roster plus Staff, Coach and Sub. TRYOUTS is locked to people holding
 the `Tryout` role plus Staff and Coach — announce that tryouts are open in
 `#announcements`, then hand out the `Tryout` role to let applicants in.
 
-Applications are tickets. When someone takes the `Tryout` role (the button in
-`#get-roles`, or a captain adding it by hand) the bot opens a private
-`#tryout-<name>` channel visible to them and staff, asks for peak rank, current
+Applications are tickets. Someone with the `Tryout` role presses **Open a
+tryout ticket** under the `#tryout-info` explainer and the bot opens a private
+`#tryout-<name>` channel visible to them and staff (one per person), asks for peak rank, current
 rank, main role and champs, secondary roles and champs, one message at a time,
 then posts a summary card with **Trialling / Accept / Decline / Close** buttons.
 Accept and Decline DM the applicant; Close deletes the channel and keeps the
