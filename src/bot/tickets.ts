@@ -108,10 +108,8 @@ async function createTicket(guild: Guild, member: GuildMember): Promise<TextChan
   tickets.create({ channel_id: channel.id, discord_id: member.id, username: member.user.username })
 
   await channel.send(
-    `Hey <@${member.id}> — welcome to your tryout. This channel is just you and the captains.\n` +
-      'Answer these six in your own words, **one message each**. A captain will read it once you are done.',
+    `<@${member.id}> welcome — just you and the captains in here. Six quick questions, one message each.\n${QUESTIONS[0].prompt}`,
   )
-  await channel.send(QUESTIONS[0].prompt)
   return channel
 }
 
@@ -197,9 +195,7 @@ async function postSummary(channel: TextChannel, ticket: Ticket) {
   })
   tickets.setSummary(ticket.channel_id, sent.id)
 
-  await channel.send(
-    `That's everything, <@${ticket.discord_id}> — thanks. A captain will reply here, usually within a few days.`,
-  )
+  await channel.send(`Done <@${ticket.discord_id}> — a captain will reply here in a few days.`)
 }
 
 function buttons() {
@@ -304,7 +300,7 @@ export function startTicketNudges(client: Client) {
       if (!channel || !next) continue
       tickets.markNudged(ticket.channel_id)
       await channel
-        .send(`<@${ticket.discord_id}> still here? No rush — whenever you're ready:\n${next.prompt}`)
+        .send(`<@${ticket.discord_id}> still here? Whenever you're ready:\n${next.prompt}`)
         .catch((err) => console.error('[tickets] nudge:', err))
     }
   }

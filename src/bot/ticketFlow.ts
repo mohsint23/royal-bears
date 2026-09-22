@@ -9,32 +9,32 @@ export const QUESTIONS = [
   {
     key: 'peak_rank',
     label: 'Peak rank',
-    prompt: "**1/6** What's your **peak rank**? Say which season too, e.g. *Emerald 2, split 1 this year*.",
+    prompt: '**1/6** Peak rank?',
   },
   {
     key: 'current_rank',
     label: 'Current rank',
-    prompt: '**2/6** And your **current rank** this split?',
+    prompt: '**2/6** Current rank?',
   },
   {
     key: 'main_role',
     label: 'Main role',
-    prompt: '**3/6** What is your **main role**? Top, Jungle, Mid, ADC or Support.',
+    prompt: '**3/6** Main role?',
   },
   {
     key: 'main_champs',
     label: 'Main-role champs',
-    prompt: '**4/6** Which **champions** do you play in that role? Best first.',
+    prompt: '**4/6** Champs for that role? Best first.',
   },
   {
     key: 'secondary_roles',
     label: 'Secondary role(s)',
-    prompt: '**5/6** Any **secondary role(s)**? List them, or say *none*.',
+    prompt: '**5/6** Secondary role(s)? Or *none*.',
   },
   {
     key: 'secondary_champs',
     label: 'Secondary champs',
-    prompt: '**6/6** And your **champions** for those secondary roles? *None* is fine.',
+    prompt: '**6/6** Champs for those roles?',
   },
 ] as const
 
