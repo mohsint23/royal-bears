@@ -116,6 +116,16 @@ Script that the bot POSTs to:
 3. Set `GOOGLE_SHEET_WEBHOOK` to that URL and `GOOGLE_SHEET_URL` to the sheet's
    share link. The board's top message then grows an "Open the Google Sheet"
    button and every refresh redraws the sheet, formatting included.
+4. Run `setup` once from the script editor. That installs an on-edit trigger:
+   changing an editable cell (IGN, ranks, year, team, roles, status, notes)
+   POSTs it to the bot's `/sheet-edit`, which updates the ticket and redraws
+   the Discord board. Status changes from the sheet rename the ticket channel
+   but send no DM. Whenever the script changes, publish a **new version** of
+   the deployment or `doPost` keeps running the old code.
+
+Who appears: one row per person (their newest ticket), never anyone holding
+A Team, B Team, a captain role or Coach, and the sheet lists finished
+applications only — the Discord board also shows people still answering.
 
 Tier-list pictures in the sheet come from the bot's own web server
 (`src/bot/web.ts`), which needs a Railway public domain; the URLs carry an

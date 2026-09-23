@@ -70,7 +70,7 @@ client.once(Events.ClientReady, async (ready) => {
   startWeekly(client)
   startAttendance(client)
   startTicketNudges(client)
-  startWeb()
+  startWeb(client)
   console.log(
     'Polling every 30 minutes. Weekly roundup Sundays 18:00, games check daily at 10:00, UK time.',
   )

@@ -11,15 +11,15 @@ import { opggUrl, tierListPath } from './tickets.js'
 
 export const COLUMNS = [
   { header: 'Discord name', key: 'discord', width: 20 },
-  { header: 'IGN', key: 'ign', width: 22 },
+  { header: 'IGN (op.gg)', key: 'ign', width: 24 },
   { header: 'Peak rank', key: 'peak', width: 16 },
-  { header: 'op.gg', key: 'opgg', width: 44 },
   { header: 'Year', key: 'year', width: 10 },
   { header: 'Team', key: 'team', width: 10 },
   { header: 'Current rank', key: 'current', width: 16 },
   { header: 'Main role', key: 'mainRole', width: 12 },
   { header: 'Other roles', key: 'secRoles', width: 22 },
   { header: 'Status', key: 'status', width: 12 },
+  { header: 'Notes', key: 'notes', width: 36 },
   { header: 'Applied', key: 'applied', width: 14 },
   { header: 'Tier list', key: 'tier', width: 38 },
 ] as const
@@ -32,15 +32,15 @@ export function applicantRow(t: Ticket) {
   const link = opggUrl(t.riot_id, accounts.mainFor(t.discord_id))
   return {
     discord: t.username,
-    ign: link?.label ?? t.riot_id ?? '',
+    ign: link ? ({ text: link.label, hyperlink: link.url } as ExcelJS.CellHyperlinkValue) : (t.riot_id ?? ''),
     peak: t.peak_rank ?? '',
-    opgg: link ? ({ text: link.url, hyperlink: link.url } as ExcelJS.CellHyperlinkValue) : '',
     year: t.year ?? '',
     team: t.team ?? '',
     current: t.current_rank ?? '',
     mainRole: t.main_role ?? '',
     secRoles: t.secondary_roles ?? '',
     status: t.status,
+    notes: t.notes ?? '',
     applied: new Date(t.created_at),
     tier: t.tier_list ? '' : '',
   }
@@ -62,9 +62,9 @@ export async function applicantsWorkbook(rows: Ticket[] = tickets.all()): Promis
     const row = ws.addRow(applicantRow(t))
     row.getCell('applied').numFmt = 'dd/mm/yyyy'
     row.alignment = { vertical: 'top', wrapText: true }
-    const opgg = row.getCell('opgg')
-    if (typeof opgg.value === 'object' && opgg.value && 'hyperlink' in opgg.value) {
-      opgg.font = { name: 'Arial', size: 11, color: { argb: 'FF0563C1' }, underline: true }
+    const ign = row.getCell('ign')
+    if (typeof ign.value === 'object' && ign.value && 'hyperlink' in ign.value) {
+      ign.font = { name: 'Arial', size: 11, color: { argb: 'FF0563C1' }, underline: true }
     }
 
     // The tier list goes in as a picture anchored to its cell. Excel cannot

@@ -186,6 +186,20 @@ function opggField(typed: string | null, main: Account | undefined): string {
   return link ? `[${link.label}](${link.url})` : '—'
 }
 
+/**
+ * A decision made outside the ticket (from the Google Sheet): update the row
+ * and rename the channel if it still exists. No DM — that is for the buttons,
+ * where a human is clearly pressing it on purpose.
+ */
+export async function applyStatus(guild: Guild, ticket: Ticket, status: TicketStatus): Promise<void> {
+  if (status === 'closed') tickets.close(ticket.channel_id)
+  else tickets.setStatus(ticket.channel_id, status)
+  const channel = await liveChannel(guild, ticket)
+  if (!channel) return
+  await channel.setName(channelName(status, ticket.username)).catch((err) => console.error('[tickets] rename:', err))
+  await channel.send({ embeds: [baseEmbed().setColor(GOLD).setDescription(`Marked **${status}** from the spreadsheet.`)] }).catch(() => {})
+}
+
 /** The stored tier list as a Discord attachment, if the file is still there. */
 export function tierListFile(ticket: Ticket): AttachmentBuilder | undefined {
   if (!ticket.tier_list || !existsSync(tierListPath(ticket.tier_list))) return undefined
@@ -194,7 +208,7 @@ export function tierListFile(ticket: Ticket): AttachmentBuilder | undefined {
 
 /** The card staff read. Exported so preview.ts can render it without Discord. */
 export function summaryEmbed(ticket: Ticket, main: Account | undefined) {
-  return baseEmbed()
+  const embed = baseEmbed()
     .setColor(GOLD)
     .setTitle('Tryout application')
     .setDescription(`<@${ticket.discord_id}>`)
@@ -206,6 +220,8 @@ export function summaryEmbed(ticket: Ticket, main: Account | undefined) {
       })),
     )
     .setImage(ticket.tier_list ? `attachment://${ticket.tier_list}` : null)
+  if (ticket.notes) embed.addFields({ name: 'Captain notes', value: ticket.notes.slice(0, 1024) })
+  return embed
 }
 
 export const summaryButtons = () =>

@@ -7,7 +7,10 @@
 import { createHash } from 'node:crypto'
 import { createReadStream, existsSync } from 'node:fs'
 import { createServer } from 'node:http'
+import type { Client } from 'discord.js'
 import { config } from './config.js'
+import { refreshPlayerDatabase } from './playerDatabase.js'
+import { applySheetEdit } from './sheet.js'
 import { tierListPath } from './tickets.js'
 
 const TOKEN = createHash('sha256').update(`tier-lists:${config.token}`).digest('hex').slice(0, 24)
@@ -20,9 +23,40 @@ export function tierListUrl(file: string | null): string | undefined {
   return `${config.publicUrl}/tier-lists/${TOKEN}/${file}`
 }
 
-export function startWeb() {
+function readBody(req: import('node:http').IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = ''
+    req.on('data', (chunk) => { data += chunk; if (data.length > 64 * 1024) req.destroy() })
+    req.on('end', () => resolve(data))
+    req.on('error', reject)
+  })
+}
+
+export function startWeb(client: Client) {
   if (!config.port) return
-  createServer((req, res) => {
+  createServer(async (req, res) => {
+    const reply = (status: number, body: unknown) => {
+      res.writeHead(status, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify(body))
+    }
+
+    // Edits typed into the Google Sheet, forwarded by its Apps Script trigger.
+    if (req.method === 'POST' && req.url === '/sheet-edit') {
+      try {
+        const body = JSON.parse(await readBody(req)) as { secret?: string; ticket?: string; header?: string; value?: string }
+        if (!config.sheetSecret || body.secret !== config.sheetSecret) return reply(403, { ok: false, error: 'bad secret' })
+        if (!body.ticket || !body.header) return reply(400, { ok: false, error: 'ticket and header required' })
+        const guild = await client.guilds.fetch(config.guildId)
+        const result = await applySheetEdit(guild, { ticket: body.ticket, header: body.header, value: String(body.value ?? '') })
+        if (result.ok) refreshPlayerDatabase(guild, { pushSheet: false }).catch((err) => console.error('[player-db] after sheet edit:', err))
+        console.log(`[sheet] edit ${body.header} on ${body.ticket}: ${result.ok ? `stored ${JSON.stringify(result.stored)}` : result.error}`)
+        return reply(result.ok ? 200 : 422, result)
+      } catch (err) {
+        console.error('[sheet] edit failed:', err)
+        return reply(500, { ok: false, error: 'internal' })
+      }
+    }
+
     if (req.url === '/') {
       res.writeHead(200, { 'Content-Type': 'text/plain' })
       res.end('Royal Bear is up.')

@@ -6,7 +6,7 @@
 
 import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ChannelType, EmbedBuilder, type Client, type Guild, type TextChannel } from 'discord.js'
 import { applicantsFilename, applicantsWorkbook } from './applicants.js'
-import { config } from './config.js'
+import { config, ROLE_NAMES } from './config.js'
 import { accounts, tickets, ticketAnswers, type Ticket } from './db.js'
 import { baseEmbed, BRAND, GREY, tierColour } from './format.js'
 import { opggUrl, tierListFile } from './tickets.js'
@@ -63,6 +63,7 @@ export function applicantCard(t: Ticket): { embeds: EmbedBuilder[]; files: Attac
       { name: 'Main role', value: t.main_role ?? '—', inline: true },
       { name: 'Open to other roles?', value: other, inline: true },
     )
+  if (t.notes) embed.addFields({ name: 'Captain notes', value: t.notes.slice(0, 1024) })
   const file = tierListFile(t)
   if (file) embed.setImage(`attachment://${t.tier_list}`)
   else embed.addFields({ name: 'Tier list', value: t.tier_list ? 'file missing' : 'not uploaded' })
@@ -124,15 +125,41 @@ export async function playerDatabaseBodies(rows: Ticket[] = tickets.all()) {
   return bodies
 }
 
+/** Roles that mean "already on a roster" — those people are not applicants. */
+const ON_TEAM: string[] = [ROLE_NAMES.aTeam, ROLE_NAMES.bTeam, ROLE_NAMES.captainA, ROLE_NAMES.captainB, ROLE_NAMES.coach]
+
+/**
+ * The tickets worth showing: one per person (their newest), and nobody who
+ * already holds a team role. Members who have left the server still count.
+ */
+export async function visibleApplicants(guild: Guild): Promise<Ticket[]> {
+  const newest = new Map<string, Ticket>()
+  for (const t of tickets.all()) {
+    const seen = newest.get(t.discord_id)
+    if (!seen || t.created_at > seen.created_at) newest.set(t.discord_id, t)
+  }
+  const ids = [...newest.keys()]
+  if (ids.length) await guild.members.fetch({ user: ids }).catch(() => null)
+  return [...newest.values()]
+    .filter((t) => {
+      const member = guild.members.cache.get(t.discord_id)
+      return !member || !member.roles.cache.some((r) => ON_TEAM.includes(r.name))
+    })
+    .sort((a, b) => a.created_at - b.created_at)
+}
+
 /** Re-renders the channel. Safe to call often; a missing channel is a no-op. */
-export async function refreshPlayerDatabase(guild: Guild): Promise<void> {
+export async function refreshPlayerDatabase(guild: Guild, opts: { pushSheet?: boolean } = {}): Promise<void> {
   const channel = guild.channels.cache.find(
     (c) => c.type === ChannelType.GuildText && c.name === config.playerDbChannel,
   ) as TextChannel | undefined
   if (!channel || !guild.client.user) return
-  const rows = tickets.all()
+  const rows = await visibleApplicants(guild)
   await syncBotMessages(channel, guild.client.user.id, await playerDatabaseBodies(rows))
-  await pushToGoogleSheet(rows).catch((err) => console.error('[sheet] push failed:', err))
+  if (opts.pushSheet !== false) {
+    // The sheet only lists finished applications; the board keeps the rest.
+    await pushToGoogleSheet(rows.filter((t) => isComplete(ticketAnswers(t)))).catch((err) => console.error('[sheet] push failed:', err))
+  }
 }
 
 export async function refreshPlayerDatabaseFor(client: Client): Promise<void> {

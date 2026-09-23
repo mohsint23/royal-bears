@@ -1,7 +1,6 @@
 import { AttachmentBuilder, MessageFlags, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js'
 import { applicantsFilename, applicantsWorkbook } from '../applicants.js'
-import { tickets } from '../db.js'
-import { refreshPlayerDatabase } from '../playerDatabase.js'
+import { refreshPlayerDatabase, visibleApplicants } from '../playerDatabase.js'
 import { isStaff } from '../util.js'
 import type { Command } from './types.js'
 
@@ -18,7 +17,7 @@ export const applicants: Command = {
     }
     await i.deferReply({ flags: MessageFlags.Ephemeral })
     await refreshPlayerDatabase(i.guild).catch((err) => console.error('[player-db] from /applicants:', err))
-    const rows = tickets.all()
+    const rows = await visibleApplicants(i.guild)
     const file = new AttachmentBuilder(await applicantsWorkbook(rows), { name: applicantsFilename() })
     await i.editReply({
       content: rows.length

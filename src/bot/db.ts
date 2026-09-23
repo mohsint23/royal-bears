@@ -118,6 +118,7 @@ db.exec(`
     secondary_roles    TEXT,
     secondary_champs   TEXT,
     tier_list          TEXT,
+    notes              TEXT,
     summary_message_id TEXT,
     created_at         INTEGER NOT NULL,
     last_activity      INTEGER NOT NULL,
@@ -130,7 +131,7 @@ db.exec(`
 // Tickets gained questions after the table first shipped.
 {
   const have = new Set((db.pragma('table_info(tryout_tickets)') as { name: string }[]).map((c) => c.name))
-  for (const col of ['riot_id', 'year', 'team', 'tier_list']) {
+  for (const col of ['riot_id', 'year', 'team', 'tier_list', 'notes']) {
     if (!have.has(col)) db.exec(`ALTER TABLE tryout_tickets ADD COLUMN ${col} TEXT`)
   }
 }
@@ -386,6 +387,7 @@ export type Ticket = {
   discord_id: string
   username: string
   status: TicketStatus
+  notes: string | null
   summary_message_id: string | null
   created_at: number
   last_activity: number
@@ -444,6 +446,14 @@ export const tickets = {
 
   setStatus: (channelId: string, status: TicketStatus) =>
     db.prepare('UPDATE tryout_tickets SET status = ? WHERE channel_id = ?').run(status, channelId),
+
+  /** Columns a captain may overwrite from the Google Sheet. */
+  EDITABLE: ['riot_id', 'year', 'team', 'peak_rank', 'current_rank', 'main_role', 'secondary_roles', 'notes'] as const,
+
+  edit(channelId: string, column: string, value: string | null) {
+    if (!(tickets.EDITABLE as readonly string[]).includes(column)) throw new Error(`Not editable: ${column}`)
+    db.prepare(`UPDATE tryout_tickets SET ${column} = ? WHERE channel_id = ?`).run(value, channelId)
+  },
 
   markNudged: (channelId: string) =>
     db.prepare('UPDATE tryout_tickets SET nudged_at = ? WHERE channel_id = ?').run(Date.now(), channelId),
