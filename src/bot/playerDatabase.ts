@@ -8,8 +8,8 @@ import { AttachmentBuilder, ChannelType, EmbedBuilder, type Client, type Guild, 
 import { applicantsFilename, applicantsWorkbook } from './applicants.js'
 import { config } from './config.js'
 import { accounts, tickets, ticketAnswers, type Ticket } from './db.js'
-import { baseEmbed, BRAND, GOLD, GREEN, GREY } from './format.js'
-import { opggUrl } from './tickets.js'
+import { baseEmbed, BRAND, GREY, tierColour } from './format.js'
+import { opggUrl, tierListFile } from './tickets.js'
 import { isComplete, QUESTIONS, type TeamChoice } from './ticketFlow.js'
 import { syncBotMessages } from './util.js'
 
@@ -21,30 +21,60 @@ const STATUS: Record<string, string> = {
   closed: '🔒',
 }
 
-const BUCKETS: { team: TeamChoice; title: string; colour: number }[] = [
-  { team: 'A', title: 'Applying for A Team', colour: GOLD },
-  { team: 'B', title: 'Applying for B Team', colour: BRAND },
-  { team: 'A and B', title: 'Happy with A or B', colour: GREEN },
-]
+const TEAM_LABEL: Record<TeamChoice, string> = { A: 'A Team', B: 'B Team', 'A and B': 'A or B Team' }
+const TEAM_ORDER: TeamChoice[] = ['A', 'B', 'A and B']
 
-/** Discord caps an embed at 25 fields. */
-const PER_EMBED = 24
+const STATUS_LABEL: Record<string, string> = {
+  open: 'Waiting on a captain',
+  trialling: 'Trialling',
+  accepted: 'Accepted',
+  declined: 'Declined',
+  closed: 'Closed without a decision',
+}
 
-function card(t: Ticket): { name: string; value: string; inline: boolean } {
+/** "Emerald 2", "plat 3", "M254" → the tier colour, or grey when unreadable. */
+function colourFor(peak: string | null): number {
+  const word = (peak ?? '').trim().toLowerCase()
+  const tier: Record<string, string> = {
+    iron: 'IRON', bronze: 'BRONZE', silver: 'SILVER', gold: 'GOLD', plat: 'PLATINUM', platinum: 'PLATINUM',
+    emerald: 'EMERALD', dia: 'DIAMOND', diamond: 'DIAMOND', master: 'MASTER', masters: 'MASTER', m: 'MASTER',
+    gm: 'GRANDMASTER', grandmaster: 'GRANDMASTER', chall: 'CHALLENGER', challenger: 'CHALLENGER',
+  }
+  const key = Object.keys(tier).find((k) => word.startsWith(k) && !/^[a-z]/.test(word.slice(k.length)))
+  return key ? tierColour(tier[key]) : GREY
+}
+
+/** One full card per applicant: every answer as a field, tier list as the picture. */
+export function applicantCard(t: Ticket): { embeds: EmbedBuilder[]; files: AttachmentBuilder[] } {
   const link = opggUrl(t.riot_id, accounts.mainFor(t.discord_id))
-  const ign = link ? `[${link.label}](${link.url})` : (t.riot_id ?? '—')
-  const lines = [
-    `${ign}${t.year ? ` · ${t.year.replace(/\s*year$/i, '')} year` : ''}`,
-    `Peak **${t.peak_rank ?? '—'}** · Now **${t.current_rank ?? '—'}**`,
-    `${t.main_role ?? '—'}${t.secondary_roles && !/^no$/i.test(t.secondary_roles.trim()) ? ` · also ${t.secondary_roles}` : ''}`,
-  ]
-  return { name: `${STATUS[t.status] ?? ''} ${t.username}`, value: lines.join('\n'), inline: true }
+  const other = t.secondary_roles?.trim() || '—'
+  const embed = baseEmbed()
+    .setColor(colourFor(t.peak_rank))
+    .setTitle(`${STATUS[t.status] ?? ''} ${t.username}`)
+    .setDescription(`<@${t.discord_id}> · applying for **${t.team ? TEAM_LABEL[t.team as TeamChoice] : '—'}**`)
+    .addFields(
+      { name: 'IGN / op.gg', value: link ? `[${link.label}](${link.url})` : (t.riot_id ?? '—'), inline: true },
+      { name: 'Year', value: t.year ?? '—', inline: true },
+      { name: 'Status', value: STATUS_LABEL[t.status] ?? t.status, inline: true },
+      { name: 'Peak rank', value: t.peak_rank ?? '—', inline: true },
+      { name: 'Current rank', value: t.current_rank ?? '—', inline: true },
+      { name: 'Applied', value: `<t:${Math.floor(t.created_at / 1000)}:d>`, inline: true },
+      { name: 'Main role', value: t.main_role ?? '—', inline: true },
+      { name: 'Open to other roles?', value: other, inline: true },
+    )
+  const file = tierListFile(t)
+  if (file) embed.setImage(`attachment://${t.tier_list}`)
+  else embed.addFields({ name: 'Tier list', value: t.tier_list ? 'file missing' : 'not uploaded' })
+  return { embeds: [embed], files: file ? [file] : [] }
 }
 
 function progress(t: Ticket): { name: string; value: string; inline: boolean } {
   const done = Object.keys(ticketAnswers(t)).length
   return { name: `${STATUS.open} ${t.username}`, value: `${done}/${QUESTIONS.length} answered`, inline: true }
 }
+
+/** Discord caps an embed at 25 fields. */
+const PER_EMBED = 24
 
 /** The messages the channel should hold, top to bottom. */
 export async function playerDatabaseBodies(rows: Ticket[] = tickets.all()) {
@@ -63,23 +93,17 @@ export async function playerDatabaseBodies(rows: Ticket[] = tickets.all()) {
       `**${finished.length}** application${finished.length === 1 ? '' : 's'}` +
         (pending.length ? ` · ${pending.length} still answering` : '') +
         `\n✅ ${counts.accepted} accepted · 🎯 ${counts.trialling} trialling · 📝 ${counts.waiting} waiting on a captain` +
-        '\n\nSpreadsheet attached — tier lists are in there. Updated <t:' + Math.floor(Date.now() / 1000) + ':R>.',
+        '\n\nOne card per applicant below, tier list included. Spreadsheet attached. Updated <t:' + Math.floor(Date.now() / 1000) + ':R>.',
     )
   const bodies: { embeds: EmbedBuilder[]; files?: AttachmentBuilder[] }[] = [
     { embeds: [header], files: [new AttachmentBuilder(await applicantsWorkbook(rows), { name: applicantsFilename() })] },
   ]
 
-  for (const bucket of BUCKETS) {
-    const members = finished.filter((t) => t.team === bucket.team)
-    for (let i = 0; i < members.length; i += PER_EMBED) {
-      const page = members.slice(i, i + PER_EMBED)
-      const embed = baseEmbed()
-        .setColor(bucket.colour)
-        .setTitle(members.length > PER_EMBED ? `${bucket.title} (${i / PER_EMBED + 1})` : bucket.title)
-        .addFields(page.map(card))
-      bodies.push({ embeds: [embed] })
-    }
-  }
+  // Grouped by team, then oldest application first, so the order is stable.
+  const sorted = [...finished].sort(
+    (a, b) => TEAM_ORDER.indexOf(a.team as TeamChoice) - TEAM_ORDER.indexOf(b.team as TeamChoice) || a.created_at - b.created_at,
+  )
+  for (const t of sorted) bodies.push(applicantCard(t))
 
   if (pending.length) {
     bodies.push({

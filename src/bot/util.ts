@@ -58,7 +58,7 @@ export async function syncBotMessages(
   botId: string,
   bodies: (MessageCreateOptions & MessageEditOptions)[],
 ): Promise<void> {
-  const recent = await channel.messages.fetch({ limit: 50 })
+  const recent = await channel.messages.fetch({ limit: 100 })
   const mine = [...recent.filter((m) => m.author.id === botId).values()].sort(
     (a, b) => a.createdTimestamp - b.createdTimestamp,
   )
