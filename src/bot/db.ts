@@ -418,10 +418,16 @@ export const tickets = {
   /** The one live ticket a person may have. */
   activeFor: (discordId: string) =>
     db
-      .prepare(`SELECT * FROM tryout_tickets WHERE discord_id = ? AND status != 'closed' ORDER BY created_at DESC LIMIT 1`)
+      .prepare('SELECT * FROM tryout_tickets WHERE discord_id = ? AND closed_at IS NULL ORDER BY created_at DESC LIMIT 1')
       .get(discordId) as Ticket | undefined,
 
-  active: () => db.prepare(`SELECT * FROM tryout_tickets WHERE status != 'closed'`).all() as Ticket[],
+  active: () => db.prepare('SELECT * FROM tryout_tickets WHERE closed_at IS NULL').all() as Ticket[],
+
+  /** Closing keeps the decision (accepted, declined, trialling); only an undecided ticket becomes 'closed'. */
+  close: (channelId: string) =>
+    db
+      .prepare(`UPDATE tryout_tickets SET closed_at = ?, status = CASE WHEN status = 'open' THEN 'closed' ELSE status END WHERE channel_id = ?`)
+      .run(Date.now(), channelId),
 
   /** Every application ever, oldest first — closed ones keep their answers. */
   all: () => db.prepare('SELECT * FROM tryout_tickets ORDER BY created_at ASC').all() as Ticket[],
@@ -437,9 +443,7 @@ export const tickets = {
     db.prepare('UPDATE tryout_tickets SET summary_message_id = ? WHERE channel_id = ?').run(messageId, channelId),
 
   setStatus: (channelId: string, status: TicketStatus) =>
-    db
-      .prepare(`UPDATE tryout_tickets SET status = @status, closed_at = CASE WHEN @status = 'closed' THEN @now ELSE closed_at END WHERE channel_id = @channelId`)
-      .run({ status, now: Date.now(), channelId }),
+    db.prepare('UPDATE tryout_tickets SET status = ? WHERE channel_id = ?').run(status, channelId),
 
   markNudged: (channelId: string) =>
     db.prepare('UPDATE tryout_tickets SET nudged_at = ? WHERE channel_id = ?').run(Date.now(), channelId),

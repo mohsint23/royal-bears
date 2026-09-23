@@ -32,6 +32,7 @@ import { config, ROLE_NAMES, STAFF_ROLES } from './config.js'
 import { accounts, riotId, tickets, ticketAnswers, type Account, type Ticket } from './db.js'
 import { baseEmbed, GOLD, GREEN, RED, opggLink } from './format.js'
 import { fetchImage } from './images.js'
+import { refreshPlayerDatabase } from './playerDatabase.js'
 import {
   channelName,
   MAX_ANSWER,
@@ -99,7 +100,7 @@ async function liveChannel(guild: Guild, ticket: Ticket | undefined): Promise<Te
   if (!ticket) return undefined
   const channel = await guild.channels.fetch(ticket.channel_id).catch(() => null)
   if (channel?.type === ChannelType.GuildText) return channel as TextChannel
-  tickets.setStatus(ticket.channel_id, 'closed')
+  tickets.close(ticket.channel_id)
   return undefined
 }
 
@@ -275,6 +276,7 @@ async function postSummary(channel: TextChannel, ticket: Ticket) {
   tickets.setSummary(ticket.channel_id, sent.id)
 
   await channel.send(`Done <@${ticket.discord_id}> — a captain will reply here in a few days.`)
+  await refreshPlayerDatabase(guild).catch((err) => console.error('[player-db] after summary:', err))
 }
 
 // ---------------------------------------------------------------------------
@@ -334,9 +336,10 @@ export async function handleTicketButton(i: ButtonInteraction) {
   }
 
   if (i.customId === BUTTON.close) {
-    tickets.setStatus(ticket.channel_id, 'closed')
+    tickets.close(ticket.channel_id)
     await i.reply({ content: 'Closing — the answers are saved.', flags: MessageFlags.Ephemeral })
     await channel.delete(`Tryout ticket closed by ${i.user.tag}`)
+    await refreshPlayerDatabase(i.guild).catch((err) => console.error('[player-db] after close:', err))
     return
   }
 
@@ -367,6 +370,7 @@ export async function handleTicketButton(i: ButtonInteraction) {
     }
   }
   await i.editReply({ content: `Marked **${status}**.` })
+  await refreshPlayerDatabase(i.guild).catch((err) => console.error('[player-db] after status:', err))
 }
 
 // ---------------------------------------------------------------------------

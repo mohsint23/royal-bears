@@ -1,4 +1,4 @@
-import { MessageFlags, type ChatInputCommandInteraction, type Guild, type GuildMember } from 'discord.js'
+import { MessageFlags, type ChatInputCommandInteraction, type Guild, type GuildMember, type MessageCreateOptions, type MessageEditOptions, type TextChannel } from 'discord.js'
 import { ROLE_NAMES, STAFF_ROLES, TRACKER_ROLES } from './config.js'
 
 export function isStaff(member: GuildMember | null): boolean {
@@ -46,4 +46,25 @@ export async function replyError(i: ChatInputCommandInteraction, message: string
   const body = { content: message, flags: MessageFlags.Ephemeral } as const
   if (i.deferred || i.replied) await i.editReply({ content: message })
   else await i.reply(body)
+}
+
+/**
+ * Makes a channel hold exactly these bot messages, in order: existing ones are
+ * edited in place, missing ones sent, leftovers deleted. Re-running never
+ * duplicates. Used for the pinned-style posts the bot owns outright.
+ */
+export async function syncBotMessages(
+  channel: TextChannel,
+  botId: string,
+  bodies: (MessageCreateOptions & MessageEditOptions)[],
+): Promise<void> {
+  const recent = await channel.messages.fetch({ limit: 50 })
+  const mine = [...recent.filter((m) => m.author.id === botId).values()].sort(
+    (a, b) => a.createdTimestamp - b.createdTimestamp,
+  )
+  for (const [n, body] of bodies.entries()) {
+    if (mine[n]) await mine[n]!.edit({ ...body, attachments: [] })
+    else await channel.send(body)
+  }
+  for (const extra of mine.slice(bodies.length)) await extra.delete()
 }

@@ -10,6 +10,7 @@ import { ChannelType, Client, GatewayIntentBits, type TextChannel } from 'discor
 import { config } from './bot/config.js'
 import { tryoutsEmbeds } from './bot/tryouts.js'
 import { panelRow } from './bot/tickets.js'
+import { syncBotMessages } from './bot/util.js'
 
 const channelName = process.argv[2] || 'tryout-info'
 const client = new Client({ intents: [GatewayIntentBits.Guilds] })
@@ -40,16 +41,7 @@ client.once('clientReady', async (ready) => {
     const bodies = embeds.map((embed, n) =>
       n === embeds.length - 1 ? { embeds: [embed], components: [panelRow()] } : { embeds: [embed], components: [] },
     )
-    const recent = await channel.messages.fetch({ limit: 50 })
-    const mine = [...recent.filter((m) => m.author.id === ready.user.id).values()].sort(
-      (a, b) => a.createdTimestamp - b.createdTimestamp,
-    )
-
-    for (const [n, body] of bodies.entries()) {
-      if (mine[n]) await mine[n]!.edit(body)
-      else await channel.send(body)
-    }
-    for (const extra of mine.slice(bodies.length)) await extra.delete()
+    await syncBotMessages(channel, ready.user.id, bodies)
     console.log(`#${channel.name}: ${bodies.length} messages in place.`)
   } catch (err) {
     console.error('Failed:', err)

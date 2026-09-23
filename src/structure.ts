@@ -237,6 +237,12 @@ export const CATEGORIES: CategoryDef[] = [
       { name: 'stat-updates', type: 'text', readOnly: true, topic: 'Rank changes and weekly roundups, posted by the bot' },
       { name: 'bot-commands', type: 'text', topic: 'Run bot commands in here to keep other channels clean' },
       {
+        name: 'player-database',
+        type: 'text',
+        readOnly: true,
+        topic: 'Every tryout applicant, kept current by the bot. The spreadsheet is attached to the top message',
+      },
+      {
         name: 'attendance',
         type: 'text',
         readOnly: true,

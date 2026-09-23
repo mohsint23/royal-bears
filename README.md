@@ -78,7 +78,7 @@ colour while a society member shows their rank colour.
 🏆 A TEAM        #a-chat  #a-scrims  #a-vod-review  #a-champ-pool  🔊 A Team
 🥈 B TEAM        #b-chat  #b-scrims  #b-vod-review  #b-champ-pool  🔊 B Team
 🎯 TRYOUTS       #tryout-info  #tryout-chat  🔊 Tryout Lobby  (+ one #tryout-<name> per applicant)
-📊 TRACKER       #stat-updates  #bot-commands
+📊 TRACKER       #stat-updates  #bot-commands  #player-database
 🔒 STAFF         #staff-chat  #roster-planning
 ```
 
@@ -97,7 +97,10 @@ answers in the database. `/applicants` (staff) attaches a spreadsheet of every
 application — Discord name, IGN, peak rank, op.gg link, year, team, the rest,
 and the tier list embedded as a picture —
 built fresh from the database each time; `npm run export-applicants` writes the
-same file locally. Reading typed answers needs the **Message Content
+same file locally. `#player-database` (TRACKER, captains and officer) is a
+bot-maintained board of the same data — spreadsheet attached to the top
+message, then a card per team bucket with a field per applicant — re-rendered
+after every ticket change and on boot. Reading typed answers needs the **Message Content
 Intent** switched on under Bot → Privileged Gateway Intents in the developer
 portal.
 

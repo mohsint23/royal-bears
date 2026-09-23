@@ -26,6 +26,7 @@ import {
   resumeTickets,
   startTicketNudges,
 } from './tickets.js'
+import { refreshPlayerDatabaseFor } from './playerDatabase.js'
 import { loadChampions } from './ddragon.js'
 import { applySeed } from './seed.js'
 import { hasKey } from './riot.js'
@@ -56,6 +57,7 @@ client.once(Events.ClientReady, async (ready) => {
 
   applySeed()
   await resumeTickets(client).catch((err) => console.error('Could not resume tryout tickets:', err))
+  await refreshPlayerDatabaseFor(client)
   await loadChampions().catch((err) => console.error('Could not load champion list:', err))
   await registerCommands(ready.user.id)
 
