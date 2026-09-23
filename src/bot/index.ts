@@ -27,6 +27,7 @@ import {
   startTicketNudges,
 } from './tickets.js'
 import { refreshPlayerDatabaseFor } from './playerDatabase.js'
+import { startWeb } from './web.js'
 import { loadChampions } from './ddragon.js'
 import { applySeed } from './seed.js'
 import { hasKey } from './riot.js'
@@ -69,6 +70,7 @@ client.once(Events.ClientReady, async (ready) => {
   startWeekly(client)
   startAttendance(client)
   startTicketNudges(client)
+  startWeb()
   console.log(
     'Polling every 30 minutes. Weekly roundup Sundays 18:00, games check daily at 10:00, UK time.',
   )

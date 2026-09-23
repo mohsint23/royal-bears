@@ -4,13 +4,14 @@
  * bucket with a field per applicant. Re-rendered whenever a ticket changes.
  */
 
-import { AttachmentBuilder, ChannelType, EmbedBuilder, type Client, type Guild, type TextChannel } from 'discord.js'
+import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ChannelType, EmbedBuilder, type Client, type Guild, type TextChannel } from 'discord.js'
 import { applicantsFilename, applicantsWorkbook } from './applicants.js'
 import { config } from './config.js'
 import { accounts, tickets, ticketAnswers, type Ticket } from './db.js'
 import { baseEmbed, BRAND, GREY, tierColour } from './format.js'
 import { opggUrl, tierListFile } from './tickets.js'
 import { isComplete, QUESTIONS, type TeamChoice } from './ticketFlow.js'
+import { pushToGoogleSheet } from './sheet.js'
 import { syncBotMessages } from './util.js'
 
 const STATUS: Record<string, string> = {
@@ -93,10 +94,20 @@ export async function playerDatabaseBodies(rows: Ticket[] = tickets.all()) {
       `**${finished.length}** application${finished.length === 1 ? '' : 's'}` +
         (pending.length ? ` · ${pending.length} still answering` : '') +
         `\n✅ ${counts.accepted} accepted · 🎯 ${counts.trialling} trialling · 📝 ${counts.waiting} waiting on a captain` +
-        '\n\nOne card per applicant below, tier list included. Spreadsheet attached. Updated <t:' + Math.floor(Date.now() / 1000) + ':R>.',
+        '\n\nOne card per applicant below, tier list included. ' +
+        (config.sheetUrl ? 'The Google Sheet is the shareable version. ' : 'Spreadsheet attached. ') +
+        'Updated <t:' + Math.floor(Date.now() / 1000) + ':R>.',
     )
-  const bodies: { embeds: EmbedBuilder[]; files?: AttachmentBuilder[] }[] = [
-    { embeds: [header], files: [new AttachmentBuilder(await applicantsWorkbook(rows), { name: applicantsFilename() })] },
+  const bodies: { embeds: EmbedBuilder[]; files?: AttachmentBuilder[]; components?: ActionRowBuilder<ButtonBuilder>[] }[] = [
+    {
+      embeds: [header],
+      files: [new AttachmentBuilder(await applicantsWorkbook(rows), { name: applicantsFilename() })],
+      components: config.sheetUrl
+        ? [new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Open the Google Sheet').setEmoji('📊').setURL(config.sheetUrl),
+          )]
+        : [],
+    },
   ]
 
   // Grouped by team, then oldest application first, so the order is stable.
@@ -119,7 +130,9 @@ export async function refreshPlayerDatabase(guild: Guild): Promise<void> {
     (c) => c.type === ChannelType.GuildText && c.name === config.playerDbChannel,
   ) as TextChannel | undefined
   if (!channel || !guild.client.user) return
-  await syncBotMessages(channel, guild.client.user.id, await playerDatabaseBodies())
+  const rows = tickets.all()
+  await syncBotMessages(channel, guild.client.user.id, await playerDatabaseBodies(rows))
+  await pushToGoogleSheet(rows).catch((err) => console.error('[sheet] push failed:', err))
 }
 
 export async function refreshPlayerDatabaseFor(client: Client): Promise<void> {

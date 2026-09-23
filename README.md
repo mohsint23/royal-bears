@@ -99,8 +99,27 @@ and the tier list embedded as a picture —
 built fresh from the database each time; `npm run export-applicants` writes the
 same file locally. `#player-database` (TRACKER, captains and officer) is a
 bot-maintained board of the same data — spreadsheet attached to the top
-message, then a card per team bucket with a field per applicant — re-rendered
-after every ticket change and on boot. Reading typed answers needs the **Message Content
+message, then one full card per applicant with their tier list — re-rendered
+after every ticket change and on boot.
+
+### Google Sheet mirror
+
+The same table can live in a Google Sheet, so the link can be shared instead
+of a file. The bot cannot sign in to Google, so the sheet runs a small Apps
+Script that the bot POSTs to:
+
+1. Make a Google Sheet. Extensions → Apps Script, delete the sample code, paste
+   `google/applicants-sheet.gs`, set `SECRET` to the bot's
+   `GOOGLE_SHEET_SECRET`, save.
+2. Deploy → New deployment → type **Web app** → Execute as **Me**, Who has
+   access **Anyone** → Deploy. Copy the web-app URL (ends in `/exec`).
+3. Set `GOOGLE_SHEET_WEBHOOK` to that URL and `GOOGLE_SHEET_URL` to the sheet's
+   share link. The board's top message then grows an "Open the Google Sheet"
+   button and every refresh redraws the sheet, formatting included.
+
+Tier-list pictures in the sheet come from the bot's own web server
+(`src/bot/web.ts`), which needs a Railway public domain; the URLs carry an
+unguessable token. Without a domain the Tier list column is blank. Reading typed answers needs the **Message Content
 Intent** switched on under Bot → Privileged Gateway Intents in the developer
 portal.
 

@@ -20,6 +20,15 @@ export const config = {
   attendanceChannel: process.env.ATTENDANCE_CHANNEL || 'attendance',
   playerDbChannel: process.env.PLAYER_DB_CHANNEL || 'player-database',
   databasePath: process.env.DATABASE_PATH || './data/royal-bears.db',
+  /** Where the tiny web server listens. Railway sets PORT; locally it stays off unless set. */
+  port: process.env.PORT ? Number(process.env.PORT) : undefined,
+  /** Public base URL of that server, for tier-list images in the Google Sheet. Railway fills RAILWAY_PUBLIC_DOMAIN once a domain exists. */
+  publicUrl:
+    process.env.PUBLIC_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : undefined),
+  /** Google Sheets mirror: the Apps Script web-app URL, its shared secret, and the sheet's share link. */
+  sheetWebhook: process.env.GOOGLE_SHEET_WEBHOOK,
+  sheetSecret: process.env.GOOGLE_SHEET_SECRET,
+  sheetUrl: process.env.GOOGLE_SHEET_URL,
 }
 
 export const ROLE_NAMES = {
