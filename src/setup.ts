@@ -165,10 +165,14 @@ function channelOverwrites(
   channel: ChannelDef,
   roles: Map<string, Role>,
 ): OverwriteResolvable[] {
+  const member = roles.get(ROLE.member)
   const base = channel.public
     ? // A channel-level allow beats the category's deny, so this reaches past a
-      // private category without opening the rest of it.
-      [{ id: guild.roles.everyone.id, allow: [P.ViewChannel], type: OverwriteType.Role } as OverwriteResolvable]
+      // private category without opening the rest of it — for Members, not visitors.
+      [
+        { id: guild.roles.everyone.id, deny: [P.ViewChannel], type: OverwriteType.Role } as OverwriteResolvable,
+        ...(member ? [{ id: member.id, allow: [P.ViewChannel], type: OverwriteType.Role } as OverwriteResolvable] : []),
+      ]
     : channel.viewableBy
       ? narrowedOverwrites(guild, category, channel.viewableBy, roles)
       : viewOverwrites(guild, category, roles)
@@ -343,7 +347,10 @@ async function ensureMemberRoles(guild: Guild, roles: Map<string, Role>) {
   const ceiling = guild.members.me?.roles.highest.position ?? 0
   let given = 0
 
+  const visitor = roles.get(ROLE.visitor)
   for (const member of guild.members.cache.values()) {
+    // A visitor is a human who has deliberately not been let in yet.
+    if (visitor && member.roles.cache.has(visitor.id)) continue
     const wanted = member.user.bot ? forBots : forHumans
     if (!wanted || member.roles.cache.has(wanted.id)) continue
     if (wanted.position >= ceiling) {

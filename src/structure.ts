@@ -19,6 +19,7 @@ export const ROLE = {
   sub: 'Sub',
   tryout: 'Tryout',
   member: 'Member',
+  visitor: 'Visitor',
   bots: 'Bots',
 } as const
 
@@ -103,6 +104,9 @@ export const ROLES: RoleDef[] = [
   // in the ungrouped bucket, which Discord draws below every hoisted role —
   // including the bots.
   { name: ROLE.member, hoist: true, mentionable: true },
+  // Everyone who joins starts here and sees only the VISITORS category. Staff
+  // swap it for Member to let them in. Hoisted so they group in the sidebar.
+  { name: ROLE.visitor, color: 0x6d6f75, hoist: true, mentionable: true },
 
   // Assigned automatically by the bot later, from Riot data.
   { name: 'Challenger', color: 0xf0d078 },
@@ -148,9 +152,10 @@ export type ChannelDef = {
    */
   viewableBy?: string[]
   /**
-   * Widens visibility above the category's: everyone sees it even though the
-   * category around it is private. The entry point to a restricted area has to
-   * be reachable by the people who have not been let in yet.
+   * Widens visibility above the category's: every Member sees it even though
+   * the category around it is private. The entry point to a restricted area
+   * has to be reachable by the people who have not been let in yet. Visitors
+   * still cannot see it.
    */
   public?: boolean
   /** Forum post tags. `moderated` ones can only be applied by staff. */
@@ -159,7 +164,7 @@ export type ChannelDef = {
 
 export type CategoryDef = {
   name: string
-  /** Roles that can see this category. Omit to make it visible to everyone. */
+  /** Roles that can see this category. Omit to make it visible to everyone, visitors included. */
   viewableBy?: string[]
   channels: ChannelDef[]
 }
@@ -169,9 +174,24 @@ const TEAM_STAFF = [ROLE.staff, ROLE.coach, ROLE.officer]
 /** Only these three people run the tracker, so only they see it. */
 const TRACKER_STAFF = [ROLE.staff, ROLE.officer, ROLE.captainA, ROLE.captainB]
 
+/** Everyone who has been let in. Visitors hold none of these. */
+const MEMBERS = [ROLE.member]
+
+/** Who can see the visitor area: the visitors, and the people who let them in. */
+const VISITOR_HOSTS = [ROLE.visitor, ...TEAM_STAFF, ROLE.captainA, ROLE.captainB]
+
 export const CATEGORIES: CategoryDef[] = [
   {
+    name: '👋 VISITORS',
+    viewableBy: VISITOR_HOSTS,
+    channels: [
+      { name: 'visitor-general', type: 'text', topic: 'New here? Say hi. A staff member will let you into the rest of the server' },
+      { name: 'Visitor Call', type: 'voice' },
+    ],
+  },
+  {
     name: '📋 INFO',
+    viewableBy: MEMBERS,
     channels: [
       { name: 'welcome', type: 'text', readOnly: true, topic: 'Start here — what Royal Bears is and how this server works' },
       { name: 'announcements', type: 'text', readOnly: true, topic: 'Tryouts, fixtures, socials. Everything you actually need to read' },
@@ -181,6 +201,7 @@ export const CATEGORIES: CategoryDef[] = [
   },
   {
     name: '💬 SOCIETY',
+    viewableBy: MEMBERS,
     channels: [
       { name: 'general', type: 'text', topic: 'Main chat for everyone in the society' },
       { name: 'looking-for-game', type: 'text', topic: 'Post here when you want a duo or a full 5' },

@@ -28,6 +28,7 @@ import {
 } from './tickets.js'
 import { refreshPlayerDatabaseFor } from './playerDatabase.js'
 import { startWeb } from './web.js'
+import { onJoin } from './welcome.js'
 import { loadChampions } from './ddragon.js'
 import { applySeed } from './seed.js'
 import { hasKey } from './riot.js'
@@ -108,6 +109,10 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
       }
     }
   }
+})
+
+client.on(Events.GuildMemberAdd, (member) => {
+  onJoin(member).catch((err) => console.error('[join]', err))
 })
 
 client.on(Events.MessageCreate, (message) => {

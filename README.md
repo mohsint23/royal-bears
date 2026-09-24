@@ -62,7 +62,7 @@ you want something gone, delete it in Discord yourself.
 
 ## What gets built
 
-**Roles**, highest first: Staff, Coach, A Team, B Team, Sub, Tryout, Member,
+**Roles**, highest first: Staff, Coach, A Team, B Team, Sub, Tryout, Member, Visitor,
 the ten rank roles (Iron up to Challenger), the five position roles, and
 `Gamers` — an opt-in ping for casual flex, Clash and ARAM lobbies.
 
@@ -77,12 +77,16 @@ colour while a society member shows their rank colour.
                  🔊 General  🔊 Duo Queue 1  🔊 Duo Queue 2
 🏆 A TEAM        #a-chat  #a-scrims  #a-vod-review  #a-champ-pool  🔊 A Team
 🥈 B TEAM        #b-chat  #b-scrims  #b-vod-review  #b-champ-pool  🔊 B Team
+👋 VISITORS      #visitor-general  🔊 Visitor Call
 🎯 TRYOUTS       #tryout-info  #tryout-chat  🔊 Tryout Lobby  (+ one #tryout-<name> per applicant)
 📊 TRACKER       #stat-updates  #bot-commands  #player-database
 🔒 STAFF         #staff-chat  #roster-planning
 ```
 
-INFO, SOCIETY and TRACKER are open to everyone. The team categories are locked
+Everyone who joins is a **Visitor** (the bot assigns it on join) and sees only
+the 👋 VISITORS category — `#visitor-general` and the Visitor Call — plus a
+welcome line from the bot. Staff let people in by removing Visitor and adding
+Member. INFO and SOCIETY are Members-only; TRACKER is staff. The team categories are locked
 to that roster plus Staff, Coach and Sub. TRYOUTS is locked to people holding
 the `Tryout` role plus Staff and Coach — announce that tryouts are open in
 `#announcements`, then hand out the `Tryout` role to let applicants in.

@@ -5,7 +5,8 @@
  * here is clickable rather than something to go hunting for.
  */
 
-import { AttachmentBuilder } from 'discord.js'
+import { AttachmentBuilder, ChannelType, type GuildMember, type TextChannel } from 'discord.js'
+import { ROLE_NAMES } from './config.js'
 import { baseEmbed, GOLD } from './format.js'
 
 const BANNER = 'banner-welcome.png'
@@ -58,4 +59,31 @@ export function welcomeEmbed(ref: (name: string) => string) {
           'Scrim plans, VODs and anything from a team channel stay in the server.',
       },
     )
+}
+
+/**
+ * Everyone who joins starts as a Visitor, which shows them only the VISITORS
+ * category. Bots get the Bots role instead. Staff promote by swapping Visitor
+ * for Member. Runs from GuildMemberAdd, so a restart never leaves a gap:
+ * anyone who slipped through is caught by `npm run setup` too.
+ */
+export async function onJoin(member: GuildMember): Promise<void> {
+  const guild = member.guild
+  const want = member.user.bot ? ROLE_NAMES.bots : ROLE_NAMES.visitor
+  const role = guild.roles.cache.find((r) => r.name === want)
+  if (!role) {
+    console.error(`[join] no "${want}" role — run npm run setup`)
+    return
+  }
+  await member.roles.add(role, 'Joined the server')
+  if (member.user.bot) return
+
+  const lobby = guild.channels.cache.find(
+    (c) => c.type === ChannelType.GuildText && c.name === 'visitor-general',
+  ) as TextChannel | undefined
+  if (!lobby) return
+  await lobby.send(
+    `Welcome <@${member.id}> 👋 You can see this channel and the Visitor Call for now. ` +
+      'Say hi and tell us who you are — a staff member will let you into the rest of the server.',
+  )
 }

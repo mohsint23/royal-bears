@@ -39,6 +39,9 @@ export const ROLE_NAMES = {
   coach: 'Coach',
   aTeam: 'A Team',
   bTeam: 'B Team',
+  member: 'Member',
+  visitor: 'Visitor',
+  bots: 'Bots',
 } as const
 
 /**
