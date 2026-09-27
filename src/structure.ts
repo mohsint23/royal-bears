@@ -173,115 +173,25 @@ export type CategoryDef = {
 
 const TEAM_STAFF = [ROLE.staff, ROLE.coach, ROLE.officer]
 
-/** Only these three people run the tracker, so only they see it. */
-const TRACKER_STAFF = [ROLE.staff, ROLE.officer, ROLE.captainA, ROLE.captainB]
-
 /** Uni students only. Outside players hold Community but never this. */
-const UNI = [ROLE.member]
+const UNI = [ROLE.member, ...TEAM_STAFF]
+
+/**
+ * The management area. The last two are roles made by hand in Discord; the
+ * setup script simply skips any name it cannot find.
+ */
+const MANAGEMENT = [ROLE.staff, ROLE.officer, ROLE.captainA, ROLE.captainB, 'Management', 'Vice President']
 
 export const CATEGORIES: CategoryDef[] = [
   {
-    name: '📋 INFO',
+    name: 'Management',
+    viewableBy: MANAGEMENT,
     channels: [
-      { name: 'welcome', type: 'text', readOnly: true, topic: 'Start here — what Royal Bears is and how this server works' },
-      { name: 'announcements', type: 'text', readOnly: true, topic: 'Inhouse nights, tryouts, fixtures. Everything you actually need to read' },
-      { name: 'get-roles', type: 'text', readOnly: true, topic: 'Pick your position, opt in to inhouses and game pings. Rank roles are handled by the bot' },
-      { name: 'patch-notes', type: 'text', readOnly: true, topic: 'Every League patch, posted automatically by PatchBot' },
-    ],
-  },
-  {
-    // Open to everyone, uni or not. This is where the server actually lives.
-    name: '🌍 COMMUNITY',
-    channels: [
-      { name: 'general', type: 'text', topic: 'Main chat for everyone here' },
-      { name: 'looking-for-game', type: 'text', topic: 'Post here when you want a duo or a full 5' },
-      { name: 'clips', type: 'text', topic: 'Outplays, disasters, and everything in between' },
-      { name: 'off-topic', type: 'text', topic: 'Anything that is not League' },
-      { name: 'General', type: 'voice' },
-      { name: 'Duo Queue 1', type: 'voice' },
-      { name: 'Duo Queue 2', type: 'voice' },
-    ],
-  },
-  {
-    // Opt in from #get-roles. Keeps lobby spam out of #general for people who
-    // do not play them, and gives @Inhouses a real audience.
-    name: '🎮 INHOUSES',
-    viewableBy: [ROLE.inhouses, ...TEAM_STAFF, ROLE.captainA, ROLE.captainB],
-    channels: [
-      { name: 'inhouses', type: 'text', topic: 'Inhouse nights: who is in, teams, results. @Inhouses when a lobby needs bodies' },
-      { name: 'custom-lobbies', type: 'text', topic: 'Customs, ARAM, arena, whatever is going. Post the lobby name and get in' },
-      { name: 'Inhouse Blue', type: 'voice' },
-      { name: 'Inhouse Red', type: 'voice' },
-      { name: 'Custom Lobby', type: 'voice' },
-    ],
-  },
-  {
-    name: '🎓 UNIVERSITY',
-    viewableBy: [...UNI, ...TEAM_STAFF],
-    channels: [
-      { name: 'uni-chat', type: 'text', topic: 'Students only. Society stuff, campus, lectures you are skipping' },
-      { name: 'socials', type: 'text', topic: 'Society socials and events' },
-      { name: 'Uni', type: 'voice' },
-    ],
-  },
-  {
-    name: '🏆 A TEAM',
-    viewableBy: [...TEAM_STAFF, ROLE.captainA, ROLE.aTeam, ROLE.sub],
-    channels: [
-      { name: 'chat', type: 'text', topic: 'A Team roster chat' },
-      { name: 'a-scrims', type: 'text', topic: 'Scrim scheduling and attendance' },
-      { name: 'a-vod-review', type: 'text', topic: 'VOD links and timestamped notes. One thread per game' },
-      { name: 'a-champ-pool', type: 'text', topic: 'Who plays what, per role' },
-      { name: 'A Team', type: 'voice' },
-    ],
-  },
-  {
-    name: '🥈 B TEAM',
-    viewableBy: [...TEAM_STAFF, ROLE.captainB, ROLE.bTeam, ROLE.sub],
-    channels: [
-      { name: 'chat', type: 'text', topic: 'B Team roster chat' },
-      { name: 'b-scrims', type: 'text', topic: 'Scrim scheduling and attendance' },
-      { name: 'b-vod-review', type: 'text', topic: 'VOD links and timestamped notes. One thread per game' },
-      { name: 'b-champ-pool', type: 'text', topic: 'Who plays what, per role' },
-      { name: 'B Team', type: 'voice' },
-    ],
-  },
-  {
-    name: '🎯 TRYOUTS',
-    viewableBy: [...TEAM_STAFF, ROLE.captainA, ROLE.captainB, ROLE.tryout],
-    channels: [
-      // Public: someone who has not taken the Tryout role yet still has to be
-      // able to read how trials work. Applications are bot-made ticket channels.
-      {
-        name: 'tryout-info',
-        type: 'text',
-        readOnly: true,
-        public: true,
-        topic: 'What we are looking for and how the trial works',
-      },
-      { name: 'tryout-chat', type: 'text', topic: 'Questions and chat for people trialling' },
-      { name: 'Tryout Lobby', type: 'voice' },
-    ],
-  },
-  {
-    name: '📊 TRACKER',
-    viewableBy: TRACKER_STAFF,
-    channels: [
-      { name: 'stat-updates', type: 'text', readOnly: true, topic: 'Rank changes and weekly roundups, posted by the bot' },
-      { name: 'bot-commands', type: 'text', topic: 'Run bot commands in here to keep other channels clean' },
-      {
-        name: 'player-database',
-        type: 'text',
-        readOnly: true,
-        topic: 'Every tryout applicant, kept current by the bot. The spreadsheet is attached to the top message',
-      },
+      { name: 'management-chat', type: 'text', topic: 'Staff, officer and captains' },
       {
         name: 'attendance',
         type: 'text',
         readOnly: true,
-        // Deliberately tighter than the rest of the category: this is about
-        // players falling short, so the captains being discussed cannot see it.
-        viewableBy: [ROLE.staff, ROLE.officer],
         topic: [
           'Games check, posted here every morning at 10:00 UK.',
           'Monday = the finished week, pass or fail. Tue–Sun = pace so far this week.',
@@ -294,6 +204,81 @@ export const CATEGORIES: CategoryDef[] = [
           '/champ remove user: champion: — drop a target.',
         ].join('\n'),
       },
+      {
+        name: 'player-database',
+        type: 'text',
+        readOnly: true,
+        topic: 'Every tryout applicant, kept current by the bot. The spreadsheet is attached to the top message',
+      },
+      { name: 'captains meeting', type: 'voice' },
+    ],
+  },
+  {
+    name: '📋 INFO',
+    channels: [
+      { name: 'welcome', type: 'text', readOnly: true, topic: 'Start here — what Royal Bears is and how this server works' },
+      { name: 'announcements', type: 'text', readOnly: true, topic: 'Inhouse nights, tryouts, fixtures. Everything you actually need to read' },
+      { name: 'socials', type: 'text', viewableBy: UNI, topic: 'Society socials and events. Students only' },
+      { name: 'get-roles', type: 'text', readOnly: true, topic: 'Pick your position, opt in to inhouses and game pings. Rank roles are handled by the bot' },
+      { name: 'patch-notes', type: 'text', readOnly: true, topic: 'Every League patch, posted automatically by PatchBot' },
+    ],
+  },
+  {
+    // Open to everyone, uni or not. This is where the server actually lives.
+    name: '🌍 COMMUNITY',
+    channels: [
+      { name: 'general', type: 'text', topic: 'Main chat for everyone here' },
+      { name: 'looking-for-game', type: 'text', topic: 'Post here when you want a duo or a full 5' },
+      { name: 'clips', type: 'text', topic: 'Outplays, disasters, and everything in between' },
+      { name: 'stat-updates', type: 'text', readOnly: true, topic: 'Rank changes and weekly roundups, posted by the bot' },
+      { name: 'bot-commands', type: 'text', topic: 'Run bot commands in here to keep other channels clean. Start with /register' },
+      { name: 'General', type: 'voice' },
+      { name: 'Duo Queue 1', type: 'voice' },
+      { name: 'Duo Queue 2', type: 'voice' },
+    ],
+  },
+  {
+    // Opt in from #get-roles. Keeps lobby spam out of #general for people who
+    // do not play them, and gives @Inhouses a real audience.
+    name: '🎮 INHOUSES',
+    viewableBy: [ROLE.inhouses, ...TEAM_STAFF, ROLE.captainA, ROLE.captainB],
+    // Channels are made and named by hand; the script only guards the category.
+    channels: [],
+  },
+  {
+    name: '🏆 A TEAM',
+    viewableBy: [...TEAM_STAFF, ROLE.captainA, ROLE.aTeam, ROLE.sub],
+    channels: [
+      { name: 'chat', type: 'text', topic: 'A Team roster chat' },
+      { name: 'a-scrims', type: 'text', topic: 'Scrim scheduling and attendance' },
+      { name: 'a-vod-review', type: 'text', topic: 'VOD links and timestamped notes. One thread per game' },
+      { name: 'A Team', type: 'voice' },
+    ],
+  },
+  {
+    name: '🥈 B TEAM',
+    viewableBy: [...TEAM_STAFF, ROLE.captainB, ROLE.bTeam, ROLE.sub],
+    channels: [
+      { name: 'chat', type: 'text', topic: 'B Team roster chat' },
+      { name: 'b-scrims', type: 'text', topic: 'Scrim scheduling and attendance' },
+      { name: 'b-vod-review', type: 'text', topic: 'VOD links and timestamped notes. One thread per game' },
+      { name: 'B Team', type: 'voice' },
+    ],
+  },
+  {
+    name: '🎯 TRYOUTS',
+    viewableBy: [...TEAM_STAFF, ROLE.captainA, ROLE.captainB, ROLE.tryout],
+    channels: [
+      // Public to Members (uni students): someone who has not taken the Tryout
+      // role yet still has to be able to read how trials work.
+      {
+        name: 'tryout-info',
+        type: 'text',
+        readOnly: true,
+        public: true,
+        topic: 'What we are looking for and how the trial works',
+      },
+      { name: 'Tryout Lobby', type: 'voice' },
     ],
   },
 ]

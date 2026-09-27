@@ -117,6 +117,14 @@ async function orderRoles(guild: Guild, byName: Map<string, Role>) {
   log(`  ordered roles (${moved} moved)`)
 }
 
+/**
+ * A role by name: the ones this script made, or any made by hand in Discord
+ * (Management, Vice President…) that the blueprint refers to.
+ */
+function roleNamed(guild: Guild, roles: Map<string, Role>, name: string): Role | undefined {
+  return roles.get(name) ?? guild.roles.cache.find((r) => r.name === name && !r.managed)
+}
+
 /** Who can see a category, expressed as Discord permission overwrites. */
 function viewOverwrites(guild: Guild, def: CategoryDef, roles: Map<string, Role>): OverwriteResolvable[] {
   if (!def.viewableBy) return []
@@ -124,7 +132,7 @@ function viewOverwrites(guild: Guild, def: CategoryDef, roles: Map<string, Role>
     { id: guild.roles.everyone.id, deny: [P.ViewChannel], type: OverwriteType.Role },
   ]
   for (const name of def.viewableBy) {
-    const role = roles.get(name)
+    const role = roleNamed(guild, roles, name)
     if (role) overwrites.push({ id: role.id, allow: [P.ViewChannel], type: OverwriteType.Role })
   }
   return overwrites
@@ -147,12 +155,12 @@ function narrowedOverwrites(
 
   for (const name of category.viewableBy ?? []) {
     if (viewableBy.includes(name)) continue
-    const role = roles.get(name)
+    const role = roleNamed(guild, roles, name)
     if (role) overwrites.push({ id: role.id, deny: [P.ViewChannel], type: OverwriteType.Role })
   }
 
   for (const name of viewableBy) {
-    const role = roles.get(name)
+    const role = roleNamed(guild, roles, name)
     if (role) overwrites.push({ id: role.id, allow: [P.ViewChannel], type: OverwriteType.Role })
   }
   return overwrites
@@ -197,7 +205,7 @@ function channelOverwrites(
   const posters = canSee ? [ROLE.staff, ROLE.coach].filter((n) => canSee.includes(n)) : [ROLE.staff, ROLE.coach]
 
   for (const name of posters) {
-    const role = roles.get(name)
+    const role = roleNamed(guild, roles, name)
     if (!role) continue
     const existing = merged.get(role.id)
     merged.set(role.id, {

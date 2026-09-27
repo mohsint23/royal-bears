@@ -17,6 +17,7 @@
     "attendance": "tsx src/runAttendance.ts",
     "export-applicants": "tsx src/exportApplicants.ts",
     "migrate-community": "tsx src/migrateCommunity.ts",
+    "tidy-tracker": "tsx src/tidyTracker.ts",
     "set-avatar": "tsx src/setAvatar.ts",
     "set-server-icon": "tsx src/setServerIcon.ts",
     "preview": "tsx src/preview.ts"

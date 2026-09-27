@@ -117,7 +117,7 @@ export function rolesEmbed(ref: (name: string) => string) {
         name: '🎯 Here to trial? (uni students)',
         value:
           `Hit **I'm here to trial** and you're in — it gets you the Tryout role, which opens ` +
-          `${ref('tryout-chat')} and the Tryout Lobby. Then open your ticket from ${ref('tryout-info')}. ` +
+          `the Tryout Lobby. Then open your ticket from ${ref('tryout-info')}. ` +
           'Changed your mind? Tap it again. Needs the Member role — ask staff if you are a student without it.',
       },
       {

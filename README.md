@@ -72,16 +72,14 @@ colour while a society member shows their rank colour.
 **Channels:**
 
 ```
-📋 INFO          #welcome  #announcements  #get-roles
-🌍 COMMUNITY     #general  #looking-for-game  #clips  #off-topic
+Management       #management-chat  #attendance  #player-database  🔊 captains meeting
+🎯 TRYOUTS       #tryout-info  🔊 Tryout Lobby  (+ one #tryout-<name> per applicant)
+📋 INFO          #welcome  #announcements  #socials (students)  #get-roles  #patch-notes
+🌍 COMMUNITY     #general  #looking-for-game  #clips  #stat-updates  #bot-commands
                  🔊 General  🔊 Duo Queue 1  🔊 Duo Queue 2
-🎮 INHOUSES      #inhouses  #custom-lobbies  🔊 Inhouse Blue  🔊 Inhouse Red  🔊 Custom Lobby
-🎓 UNIVERSITY    #uni-chat  #socials  🔊 Uni
-🏆 A TEAM        #a-chat  #a-scrims  #a-vod-review  #a-champ-pool  🔊 A Team
-🥈 B TEAM        #b-chat  #b-scrims  #b-vod-review  #b-champ-pool  🔊 B Team
-🎯 TRYOUTS       #tryout-info  #tryout-chat  🔊 Tryout Lobby  (+ one #tryout-<name> per applicant)
-📊 TRACKER       #stat-updates  #bot-commands  #player-database
-🔒 STAFF         #staff-chat  #roster-planning
+🏆 A TEAM        #chat  #a-scrims  #a-vod-review  🔊 A Team
+🥈 B TEAM        #chat  #b-scrims  #b-vod-review  🔊 B Team
+🎮 INHOUSES      channels made by hand — the script only guards the category
 ```
 
 Two audiences share the server. Everyone who joins gets **Community** from the
