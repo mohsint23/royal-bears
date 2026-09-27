@@ -20,6 +20,7 @@ export const ROLE = {
   tryout: 'Tryout',
   member: 'Member',
   community: 'Community',
+  inhouses: 'Inhouses',
   bots: 'Bots',
 } as const
 
@@ -127,6 +128,8 @@ export const ROLES: RoleDef[] = [
   { name: 'Support', mentionable: true },
   // Opt-in ping for casual games: flex, Clash, ARAM, whatever is going.
   { name: 'Gamers', mentionable: true },
+  // Self-assigned from #get-roles: opens the INHOUSES category and is the ping for lobbies.
+  { name: ROLE.inhouses, mentionable: true },
 
   // Last on purpose: lowest hoisted role, so bots sit under every human group.
   { name: ROLE.bots, color: 0x5865f2, hoist: true },
@@ -182,7 +185,7 @@ export const CATEGORIES: CategoryDef[] = [
     channels: [
       { name: 'welcome', type: 'text', readOnly: true, topic: 'Start here — what Royal Bears is and how this server works' },
       { name: 'announcements', type: 'text', readOnly: true, topic: 'Inhouse nights, tryouts, fixtures. Everything you actually need to read' },
-      { name: 'get-roles', type: 'text', readOnly: true, topic: 'Pick your position and whether you want game pings. Rank roles are handled by the bot' },
+      { name: 'get-roles', type: 'text', readOnly: true, topic: 'Pick your position, opt in to inhouses and game pings. Rank roles are handled by the bot' },
       { name: 'patch-notes', type: 'text', readOnly: true, topic: 'Every League patch, posted automatically by PatchBot' },
     ],
   },
@@ -191,17 +194,25 @@ export const CATEGORIES: CategoryDef[] = [
     name: '🌍 COMMUNITY',
     channels: [
       { name: 'general', type: 'text', topic: 'Main chat for everyone here' },
-      { name: 'inhouses', type: 'text', topic: 'Inhouse nights: who is in, teams, results. @Gamers when a lobby needs bodies' },
-      { name: 'custom-lobbies', type: 'text', topic: 'Customs, ARAM, arena, whatever is going. Post the lobby name and get in' },
       { name: 'looking-for-game', type: 'text', topic: 'Post here when you want a duo or a full 5' },
       { name: 'clips', type: 'text', topic: 'Outplays, disasters, and everything in between' },
       { name: 'off-topic', type: 'text', topic: 'Anything that is not League' },
       { name: 'General', type: 'voice' },
+      { name: 'Duo Queue 1', type: 'voice' },
+      { name: 'Duo Queue 2', type: 'voice' },
+    ],
+  },
+  {
+    // Opt in from #get-roles. Keeps lobby spam out of #general for people who
+    // do not play them, and gives @Inhouses a real audience.
+    name: '🎮 INHOUSES',
+    viewableBy: [ROLE.inhouses, ...TEAM_STAFF, ROLE.captainA, ROLE.captainB],
+    channels: [
+      { name: 'inhouses', type: 'text', topic: 'Inhouse nights: who is in, teams, results. @Inhouses when a lobby needs bodies' },
+      { name: 'custom-lobbies', type: 'text', topic: 'Customs, ARAM, arena, whatever is going. Post the lobby name and get in' },
       { name: 'Inhouse Blue', type: 'voice' },
       { name: 'Inhouse Red', type: 'voice' },
       { name: 'Custom Lobby', type: 'voice' },
-      { name: 'Duo Queue 1', type: 'voice' },
-      { name: 'Duo Queue 2', type: 'voice' },
     ],
   },
   {

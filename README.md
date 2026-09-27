@@ -73,8 +73,9 @@ colour while a society member shows their rank colour.
 
 ```
 📋 INFO          #welcome  #announcements  #get-roles
-🌍 COMMUNITY     #general  #inhouses  #custom-lobbies  #looking-for-game  #clips  #off-topic
-                 🔊 General  🔊 Inhouse Blue  🔊 Inhouse Red  🔊 Custom Lobby  🔊 Duo Queue 1  🔊 Duo Queue 2
+🌍 COMMUNITY     #general  #looking-for-game  #clips  #off-topic
+                 🔊 General  🔊 Duo Queue 1  🔊 Duo Queue 2
+🎮 INHOUSES      #inhouses  #custom-lobbies  🔊 Inhouse Blue  🔊 Inhouse Red  🔊 Custom Lobby
 🎓 UNIVERSITY    #uni-chat  #socials  🔊 Uni
 🏆 A TEAM        #a-chat  #a-scrims  #a-vod-review  #a-champ-pool  🔊 A Team
 🥈 B TEAM        #b-chat  #b-scrims  #b-vod-review  #b-champ-pool  🔊 B Team
@@ -84,8 +85,9 @@ colour while a society member shows their rank colour.
 ```
 
 Two audiences share the server. Everyone who joins gets **Community** from the
-bot and can use INFO and 🌍 COMMUNITY straight away — general chat, inhouses,
-custom lobbies, looking-for-game, the voice channels. Uni students also get
+bot and can use INFO and 🌍 COMMUNITY straight away — general chat,
+looking-for-game, clips, the voice channels. 🎮 INHOUSES is behind the
+self-assign `Inhouses` role from `#get-roles`, which is also the lobby ping. Uni students also get
 **Member** (staff run `/letin @user`), which opens 🎓 UNIVERSITY and lets them
 press the tryout button. Team categories, TRYOUTS and TRACKER stay locked to
 their roles, so outside players never see them. The team categories are locked

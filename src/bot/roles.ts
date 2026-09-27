@@ -31,6 +31,8 @@ const TRYOUT_ROLE = 'Tryout'
 const MEMBER_ROLE = 'Member'
 const GAMERS = 'role:__gamers'
 const GAMERS_ROLE = 'Gamers'
+const INHOUSES = 'role:__inhouses'
+const INHOUSES_ROLE = 'Inhouses'
 const BANNER = 'banner-roles.png'
 
 /** Purely decorative, but it makes the row scannable at a glance. */
@@ -57,10 +59,15 @@ export function roleButtons() {
     ),
     new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
-        .setCustomId(GAMERS)
-        .setLabel('Ping me for games')
+        .setCustomId(INHOUSES)
+        .setLabel('Inhouses')
         .setEmoji('🎮')
         .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId(GAMERS)
+        .setLabel('Ping me for games')
+        .setEmoji('🔔')
+        .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
         .setCustomId(TRYOUT)
         .setLabel("I'm here to trial")
@@ -95,7 +102,13 @@ export function rolesEmbed(ref: (name: string) => string) {
         value: "Pick them all. There's no limit, and no downside to being honest about a fill.",
       },
       {
-        name: '🎮 Want pinging for games?',
+        name: '🎮 Inhouses and customs',
+        value:
+          `Hit **Inhouses** to open ${ref('inhouses')} and ${ref('custom-lobbies')} plus their voice channels. ` +
+          '@Inhouses is the ping when a lobby needs bodies. Tap again to leave.',
+      },
+      {
+        name: '🔔 Want pinging for games?',
         value:
           'Hit **Ping me for games** for the **Gamers** role. Anyone can @Gamers when a flex, Clash or ' +
           'ARAM lobby needs bodies. Tap again to stop the pings.',
@@ -118,7 +131,7 @@ export function rolesEmbed(ref: (name: string) => string) {
 
 /** Everything a member can hand themselves from this message. */
 function selfAssignable(guild: Guild): Role[] {
-  return [...POSITIONS, TRYOUT_ROLE, GAMERS_ROLE]
+  return [...POSITIONS, TRYOUT_ROLE, GAMERS_ROLE, INHOUSES_ROLE]
     .map((name) => guild.roles.cache.find((r) => r.name === name))
     .filter((r): r is Role => Boolean(r))
 }
@@ -165,7 +178,10 @@ export async function handleRoleButton(i: ButtonInteraction) {
   }
 
   const wanted =
-    i.customId === TRYOUT ? TRYOUT_ROLE : i.customId === GAMERS ? GAMERS_ROLE : i.customId.slice(PREFIX.length)
+    i.customId === TRYOUT ? TRYOUT_ROLE
+    : i.customId === GAMERS ? GAMERS_ROLE
+    : i.customId === INHOUSES ? INHOUSES_ROLE
+    : i.customId.slice(PREFIX.length)
   const role = selfAssignable(guild).find((r) => r.name === wanted)
 
   if (!role) {
@@ -186,6 +202,17 @@ export async function handleRoleButton(i: ButtonInteraction) {
   const had = member.roles.cache.has(role.id)
   if (had) await member.roles.remove(role, 'Self-assigned from #get-roles')
   else await member.roles.add(role, 'Self-assigned from #get-roles')
+
+  if (i.customId === INHOUSES) {
+    const ch = guild.channels.cache.find((c) => c.name === 'inhouses')
+    await i.reply({
+      content: had
+        ? 'Dropped **Inhouses** — the inhouse channels are hidden again.'
+        : `You're in. ${ch ?? '#inhouses'} and the lobby voice channels are open to you now.`,
+      flags: MessageFlags.Ephemeral,
+    })
+    return
+  }
 
   if (i.customId === GAMERS) {
     await i.reply({

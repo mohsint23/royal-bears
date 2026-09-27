@@ -81,7 +81,7 @@ export async function onJoin(member: GuildMember): Promise<void> {
   ) as TextChannel | undefined
   const ref = (name: string) => guild.channels.cache.find((c) => c.name === name)?.toString() ?? `#${name}`
   await general?.send(
-    `Welcome <@${member.id}> 👋 Grab your lanes in ${ref('get-roles')} and hit **Ping me for games** if you want a shout ` +
-      `when an inhouse or custom is going. ${ref('inhouses')} and ${ref('custom-lobbies')} are where that happens.`,
+    `Welcome <@${member.id}> 👋 Grab your lanes in ${ref('get-roles')}, and hit **Inhouses** there if you want in on ` +
+      'inhouse nights and custom lobbies.',
   )
 }
