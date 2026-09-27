@@ -84,14 +84,15 @@ Management       #management-chat  #attendance  #player-database  🔊 captains 
 
 Two audiences share the server. Everyone who joins gets **Community** from the
 bot and can use INFO and 🌍 COMMUNITY straight away — general chat,
-looking-for-game, clips, the voice channels. 🎮 INHOUSES is behind the
-self-assign `Inhouses` role from `#get-roles`, which is also the lobby ping. Uni students also get
-**Member** (staff run `/letin @user`), which opens 🎓 UNIVERSITY and lets them
-press the tryout button. Team categories, TRYOUTS and TRACKER stay locked to
-their roles, so outside players never see them. The team categories are locked
-to that roster plus Staff, Coach and Sub. TRYOUTS is locked to people holding
-the `Tryout` role plus Staff and Coach — announce that tryouts are open in
-`#announcements`, then hand out the `Tryout` role to let applicants in.
+looking-for-game, clips, the bot channels, the voice channels. 🎮 INHOUSES is
+behind the self-assign `Inhouses` role from `#get-roles`, which is also the
+lobby ping. Uni students also get **Member** (staff run `/letin @user`), which
+opens `#socials` and lets them press the tryout button. Management (attendance,
+player database, captains) is Staff, LoL Officer, captains and the hand-made
+Management / Vice President roles. Team categories and TRYOUTS stay locked to
+their roles, so outside players never see them. The setup script never deletes
+a channel, but it does recreate any channel the blueprint lists — so a channel
+removed by hand must also be removed from `src/structure.ts`.
 
 Applications are tickets. Someone with the `Tryout` role presses **Open a
 tryout ticket** under the `#tryout-info` explainer and the bot opens a private
@@ -103,7 +104,7 @@ answers in the database. `/applicants` (staff) attaches a spreadsheet of every
 application — Discord name, IGN, peak rank, op.gg link, year, team, the rest,
 and the tier list embedded as a picture —
 built fresh from the database each time; `npm run export-applicants` writes the
-same file locally. `#player-database` (TRACKER, captains and officer) is a
+same file locally. `#player-database` (Management) is a
 bot-maintained board of the same data — spreadsheet attached to the top
 message, then one full card per applicant with their tier list — re-rendered
 after every ticket change and on boot.
