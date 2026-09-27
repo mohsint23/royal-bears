@@ -19,7 +19,7 @@ export const ROLE = {
   sub: 'Sub',
   tryout: 'Tryout',
   member: 'Member',
-  visitor: 'Visitor',
+  community: 'Community',
   bots: 'Bots',
 } as const
 
@@ -100,13 +100,12 @@ export const ROLES: RoleDef[] = [
   { name: ROLE.bTeam, color: 0x6b94e8, hoist: true, mentionable: true },
   { name: ROLE.sub, color: 0x8fa8c8, hoist: true, mentionable: true },
   { name: ROLE.tryout, color: 0x9aa0a6, hoist: true, mentionable: true },
-  // Hoisted so ordinary members form a group of their own. Without it they land
-  // in the ungrouped bucket, which Discord draws below every hoisted role —
-  // including the bots.
+  // Uni students. Hoisted so they form a group of their own above Community.
   { name: ROLE.member, hoist: true, mentionable: true },
-  // Everyone who joins starts here and sees only the VISITORS category. Staff
-  // swap it for Member to let them in. Hoisted so they group in the sidebar.
-  { name: ROLE.visitor, color: 0x6d6f75, hoist: true, mentionable: true },
+  // Everyone who joins gets this and can play straight away: inhouses,
+  // customs, the shared chat. Member sits on top for uni students. Hoisted so
+  // outside players form their own group in the sidebar.
+  { name: ROLE.community, color: 0x6d6f75, hoist: true, mentionable: true },
 
   // Assigned automatically by the bot later, from Riot data.
   { name: 'Challenger', color: 0xf0d078 },
@@ -154,8 +153,8 @@ export type ChannelDef = {
   /**
    * Widens visibility above the category's: every Member sees it even though
    * the category around it is private. The entry point to a restricted area
-   * has to be reachable by the people who have not been let in yet. Visitors
-   * still cannot see it.
+   * has to be reachable by the people who have not been let in yet. Outside
+   * players (Community without Member) still cannot see it.
    */
   public?: boolean
   /** Forum post tags. `moderated` ones can only be applied by staff. */
@@ -164,7 +163,7 @@ export type ChannelDef = {
 
 export type CategoryDef = {
   name: string
-  /** Roles that can see this category. Omit to make it visible to everyone, visitors included. */
+  /** Roles that can see this category. Omit to make it visible to everyone, outside players included. */
   viewableBy?: string[]
   channels: ChannelDef[]
 }
@@ -174,42 +173,44 @@ const TEAM_STAFF = [ROLE.staff, ROLE.coach, ROLE.officer]
 /** Only these three people run the tracker, so only they see it. */
 const TRACKER_STAFF = [ROLE.staff, ROLE.officer, ROLE.captainA, ROLE.captainB]
 
-/** Everyone who has been let in. Visitors hold none of these. */
-const MEMBERS = [ROLE.member]
-
-/** Who can see the visitor area: the visitors, and the people who let them in. */
-const VISITOR_HOSTS = [ROLE.visitor, ...TEAM_STAFF, ROLE.captainA, ROLE.captainB]
+/** Uni students only. Outside players hold Community but never this. */
+const UNI = [ROLE.member]
 
 export const CATEGORIES: CategoryDef[] = [
   {
-    name: '👋 VISITORS',
-    viewableBy: VISITOR_HOSTS,
-    channels: [
-      { name: 'visitor-general', type: 'text', topic: 'New here? Say hi. A staff member will let you into the rest of the server' },
-      { name: 'Visitor Call', type: 'voice' },
-    ],
-  },
-  {
     name: '📋 INFO',
-    viewableBy: MEMBERS,
     channels: [
       { name: 'welcome', type: 'text', readOnly: true, topic: 'Start here — what Royal Bears is and how this server works' },
-      { name: 'announcements', type: 'text', readOnly: true, topic: 'Tryouts, fixtures, socials. Everything you actually need to read' },
-      { name: 'get-roles', type: 'text', readOnly: true, topic: 'Pick your position. Rank roles are handled by the bot' },
+      { name: 'announcements', type: 'text', readOnly: true, topic: 'Inhouse nights, tryouts, fixtures. Everything you actually need to read' },
+      { name: 'get-roles', type: 'text', readOnly: true, topic: 'Pick your position and whether you want game pings. Rank roles are handled by the bot' },
       { name: 'patch-notes', type: 'text', readOnly: true, topic: 'Every League patch, posted automatically by PatchBot' },
     ],
   },
   {
-    name: '💬 SOCIETY',
-    viewableBy: MEMBERS,
+    // Open to everyone, uni or not. This is where the server actually lives.
+    name: '🌍 COMMUNITY',
     channels: [
-      { name: 'general', type: 'text', topic: 'Main chat for everyone in the society' },
+      { name: 'general', type: 'text', topic: 'Main chat for everyone here' },
+      { name: 'inhouses', type: 'text', topic: 'Inhouse nights: who is in, teams, results. @Gamers when a lobby needs bodies' },
+      { name: 'custom-lobbies', type: 'text', topic: 'Customs, ARAM, arena, whatever is going. Post the lobby name and get in' },
       { name: 'looking-for-game', type: 'text', topic: 'Post here when you want a duo or a full 5' },
       { name: 'clips', type: 'text', topic: 'Outplays, disasters, and everything in between' },
       { name: 'off-topic', type: 'text', topic: 'Anything that is not League' },
       { name: 'General', type: 'voice' },
+      { name: 'Inhouse Blue', type: 'voice' },
+      { name: 'Inhouse Red', type: 'voice' },
+      { name: 'Custom Lobby', type: 'voice' },
       { name: 'Duo Queue 1', type: 'voice' },
       { name: 'Duo Queue 2', type: 'voice' },
+    ],
+  },
+  {
+    name: '🎓 UNIVERSITY',
+    viewableBy: [...UNI, ...TEAM_STAFF],
+    channels: [
+      { name: 'uni-chat', type: 'text', topic: 'Students only. Society stuff, campus, lectures you are skipping' },
+      { name: 'socials', type: 'text', topic: 'Society socials and events' },
+      { name: 'Uni', type: 'voice' },
     ],
   },
   {

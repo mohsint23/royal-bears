@@ -28,6 +28,7 @@ const PREFIX = 'role:'
 const CLEAR = 'role:__clear'
 const TRYOUT = 'role:__tryout'
 const TRYOUT_ROLE = 'Tryout'
+const MEMBER_ROLE = 'Member'
 const GAMERS = 'role:__gamers'
 const GAMERS_ROLE = 'Gamers'
 const BANNER = 'banner-roles.png'
@@ -100,11 +101,11 @@ export function rolesEmbed(ref: (name: string) => string) {
           'ARAM lobby needs bodies. Tap again to stop the pings.',
       },
       {
-        name: '🎯 Here to trial?',
+        name: '🎯 Here to trial? (uni students)',
         value:
           `Hit **I'm here to trial** and you're in — it gets you the Tryout role, which opens ` +
           `${ref('tryout-chat')} and the Tryout Lobby. Then open your ticket from ${ref('tryout-info')}. ` +
-          'Changed your mind? Tap it again.',
+          'Changed your mind? Tap it again. Needs the Member role — ask staff if you are a student without it.',
       },
       {
         name: 'Rank roles sort themselves out',
@@ -197,6 +198,16 @@ export async function handleRoleButton(i: ButtonInteraction) {
   }
 
   if (i.customId === TRYOUT) {
+    if (!had && !member.roles.cache.some((r) => r.name === MEMBER_ROLE)) {
+      await member.roles.remove(role, 'Not a uni member').catch(() => {})
+      await i.reply({
+        content:
+          'Tryouts are for the uni teams, so they need the **Member** role. If you are a student here, ' +
+          'ask a staff member to `/letin` you and try again.',
+        flags: MessageFlags.Ephemeral,
+      })
+      return
+    }
     const info = guild.channels.cache.find((c) => c.name === 'tryout-info')
     await i.reply({
       content: had

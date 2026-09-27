@@ -62,14 +62,12 @@ export function welcomeEmbed(ref: (name: string) => string) {
 }
 
 /**
- * Everyone who joins starts as a Visitor, which shows them only the VISITORS
- * category. Bots get the Bots role instead. Staff promote by swapping Visitor
- * for Member. Runs from GuildMemberAdd, so a restart never leaves a gap:
- * anyone who slipped through is caught by `npm run setup` too.
+ * Everyone who joins gets Community and can play straight away. Bots get the
+ * Bots role instead. Uni students get Member on top, from staff via /letin.
  */
 export async function onJoin(member: GuildMember): Promise<void> {
   const guild = member.guild
-  const want = member.user.bot ? ROLE_NAMES.bots : ROLE_NAMES.visitor
+  const want = member.user.bot ? ROLE_NAMES.bots : ROLE_NAMES.community
   const role = guild.roles.cache.find((r) => r.name === want)
   if (!role) {
     console.error(`[join] no "${want}" role — run npm run setup`)
@@ -78,12 +76,12 @@ export async function onJoin(member: GuildMember): Promise<void> {
   await member.roles.add(role, 'Joined the server')
   if (member.user.bot) return
 
-  const lobby = guild.channels.cache.find(
-    (c) => c.type === ChannelType.GuildText && c.name === 'visitor-general',
+  const general = guild.channels.cache.find(
+    (c) => c.type === ChannelType.GuildText && c.name === 'general',
   ) as TextChannel | undefined
-  if (!lobby) return
-  await lobby.send(
-    `Welcome <@${member.id}> 👋 You can see this channel and the Visitor Call for now. ` +
-      'Say hi and tell us who you are — a staff member will let you into the rest of the server.',
+  const ref = (name: string) => guild.channels.cache.find((c) => c.name === name)?.toString() ?? `#${name}`
+  await general?.send(
+    `Welcome <@${member.id}> 👋 Grab your lanes in ${ref('get-roles')} and hit **Ping me for games** if you want a shout ` +
+      `when an inhouse or custom is going. ${ref('inhouses')} and ${ref('custom-lobbies')} are where that happens.`,
   )
 }

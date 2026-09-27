@@ -16,6 +16,7 @@
     "post-tryouts": "tsx src/postTryouts.ts",
     "attendance": "tsx src/runAttendance.ts",
     "export-applicants": "tsx src/exportApplicants.ts",
+    "migrate-community": "tsx src/migrateCommunity.ts",
     "set-avatar": "tsx src/setAvatar.ts",
     "set-server-icon": "tsx src/setServerIcon.ts",
     "preview": "tsx src/preview.ts"

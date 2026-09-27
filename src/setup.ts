@@ -334,12 +334,13 @@ async function ensureGuildSettings(guild: Guild) {
 }
 
 /**
- * Gives every human the Member role and every bot the Bots role, which is what
- * actually splits the member list into "people" and "apps". Roles above the
- * bot's own are skipped rather than throwing.
+ * Gives every human the Community role and every bot the Bots role, which is
+ * what splits the member list into "people" and "apps". Member (uni students)
+ * is deliberately not handed out here — staff give it to people they know.
+ * Roles above the bot's own are skipped rather than throwing.
  */
 async function ensureMemberRoles(guild: Guild, roles: Map<string, Role>) {
-  const forHumans = roles.get(ROLE.member)
+  const forHumans = roles.get(ROLE.community)
   const forBots = roles.get(ROLE.bots)
   if (!forHumans && !forBots) return
 
@@ -347,10 +348,7 @@ async function ensureMemberRoles(guild: Guild, roles: Map<string, Role>) {
   const ceiling = guild.members.me?.roles.highest.position ?? 0
   let given = 0
 
-  const visitor = roles.get(ROLE.visitor)
   for (const member of guild.members.cache.values()) {
-    // A visitor is a human who has deliberately not been let in yet.
-    if (visitor && member.roles.cache.has(visitor.id)) continue
     const wanted = member.user.bot ? forBots : forHumans
     if (!wanted || member.roles.cache.has(wanted.id)) continue
     if (wanted.position >= ceiling) {
@@ -360,7 +358,7 @@ async function ensureMemberRoles(guild: Guild, roles: Map<string, Role>) {
     await member.roles.add(wanted, 'Royal Bears server setup').catch(() => {})
     given++
   }
-  log(given ? `  handed out ${given} membership role${given === 1 ? '' : 's'}` : '  membership roles already set')
+  log(given ? `  handed out ${given} Community role${given === 1 ? '' : 's'}` : '  Community roles already set')
 }
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] })

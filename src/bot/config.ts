@@ -40,7 +40,7 @@ export const ROLE_NAMES = {
   aTeam: 'A Team',
   bTeam: 'B Team',
   member: 'Member',
-  visitor: 'Visitor',
+  community: 'Community',
   bots: 'Bots',
 } as const
 
