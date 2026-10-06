@@ -10,6 +10,7 @@ import { createServer } from 'node:http'
 import { accounts } from './bot/db.js'
 import { buildProfile } from './bot/commands/profile.js'
 import { buildTeam } from './bot/commands/team.js'
+import { buildLeaderboard } from './bot/commands/leaderboard.js'
 import { rolesEmbed } from './bot/roles.js'
 import { summaryEmbed, summaryButtons } from './bot/tickets.js'
 import { QUESTIONS } from './bot/ticketFlow.js'
@@ -115,6 +116,9 @@ const roster = mains.map((main) => ({
   accounts: all.filter((a) => a.discord_id === main.discord_id),
 }))
 
+// The ladder takes the same players, keyed by Discord id rather than by name.
+const ladder = roster.map((p) => ({ discordId: p.accounts[0]!.discord_id, name: p.name, accounts: p.accounts }))
+
 // A deliberately mixed week, so the below-target layout can be looked at too.
 const week = Date.now() - 7 * 24 * 60 * 60 * 1000
 const rankedFor = (puuid: string) => matches.since(puuid, week).filter((m) => [420, 440].includes(m.queue_id))
@@ -130,6 +134,9 @@ const bodies =
   message(buildAttendance(attendance, { mode: 'pace', day: 3 }).embed.toJSON()) +
   message(buildAttendance(attendance, { mode: 'final' }).embed.toJSON()) +
   message(buildTeam('A Team', roster, ['Connor', 'Ali']).toJSON()) +
+  // Both orderings, since the bolded column and the headline change with them.
+  message(buildLeaderboard('Royal Bears ladder', ladder, { sort: 'rank', since: week }).toJSON()) +
+  message(buildLeaderboard('A Team ladder', ladder, { sort: 'games', since: week, missing: ['Connor'] }).toJSON()) +
   message(rolesEmbed((n) => `#${n}`).toJSON()) +
   '<div class="buttons">' +
   ['⬆️ Top', '🌿 Jungle', '✳️ Mid', '🏹 ADC', '🛡️ Support'].map((b) => `<span class="btn">${b}</span>`).join('') +
