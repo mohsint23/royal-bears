@@ -13,19 +13,9 @@ export const GREEN = 0x22a45d
 export const RED = 0xc8382f
 export const GREY = 0x9aa0a6
 
-const TIER_ORDER: Record<string, number> = {
-  IRON: 0, BRONZE: 1, SILVER: 2, GOLD: 3, PLATINUM: 4,
-  EMERALD: 5, DIAMOND: 6, MASTER: 7, GRANDMASTER: 8, CHALLENGER: 9,
-}
-const DIVISION_ORDER: Record<string, number> = { IV: 0, III: 1, II: 2, I: 3 }
-
-/** A single number so two ranks can be compared for promotions and demotions. */
-export function rankScore(r: Pick<RankRow, 'tier' | 'division' | 'lp'> | undefined): number {
-  if (!r?.tier) return -1
-  const tier = TIER_ORDER[r.tier] ?? 0
-  const div = DIVISION_ORDER[r.division ?? 'IV'] ?? 0
-  return tier * 1000 + div * 100 + Math.min(r.lp, 99)
-}
+// Lives in rank.ts so it can be tested on its own; re-exported here because
+// every caller already reaches for it through format.
+export { rankScore } from './rank.js'
 
 const TITLE_CASE = (s: string) => s.charAt(0) + s.slice(1).toLowerCase()
 
