@@ -14,6 +14,7 @@
     "post-roles": "tsx src/postRoles.ts",
     "post-welcome": "tsx src/postWelcome.ts",
     "post-tryouts": "tsx src/postTryouts.ts",
+    "add-team-c": "tsx src/addTeamC.ts",
     "attendance": "tsx src/runAttendance.ts",
     "export-applicants": "tsx src/exportApplicants.ts",
     "migrate-community": "tsx src/migrateCommunity.ts",

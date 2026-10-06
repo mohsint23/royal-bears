@@ -62,7 +62,7 @@ you want something gone, delete it in Discord yourself.
 
 ## What gets built
 
-**Roles**, highest first: Staff, Coach, A Team, B Team, Sub, Tryout, Member, Community,
+**Roles**, highest first: Staff, Coach, A Team, B Team, C Team, Sub, Tryout, Member, Community,
 the ten rank roles (Iron up to Challenger), the five position roles, and
 `Gamers` — an opt-in ping for casual flex, Clash and ARAM lobbies.
 
@@ -79,8 +79,14 @@ Management       #management-chat  #attendance  #player-database  🔊 captains 
                  🔊 General  🔊 Duo Queue 1  🔊 Duo Queue 2
 🏆 A TEAM        #chat  #a-scrims  #a-vod-review  🔊 A Team
 🥈 B TEAM        #chat  #b-scrims  #b-vod-review  🔊 B Team
+🥉 C TEAM        #chat  #c-scrims  #c-vod-review  🔊 C Team
 🎮 INHOUSES      channels made by hand — the script only guards the category
 ```
+
+Each roster is its own category, locked to its team role, its captain, Sub and
+team staff. `npm run add-team-c` was the one-off that added the C section to a
+server already running — it creates only those roles and channels, because a
+full `npm run setup` re-applies the whole blueprint. See **Adding a roster**.
 
 Two audiences share the server. Everyone who joins gets **Community** from the
 bot and can use INFO and 🌍 COMMUNITY straight away — general chat,
@@ -93,6 +99,25 @@ Management / Vice President roles. Team categories and TRYOUTS stay locked to
 their roles, so outside players never see them. The setup script never deletes
 a channel, but it does recreate any channel the blueprint lists — so a channel
 removed by hand must also be removed from `src/structure.ts`.
+
+### Adding a roster
+
+A new team needs two roles, a category and four channels. `src/structure.ts` is
+the place to describe it: add the names to `ROLE`, an entry to `ROLES` for each
+(the captain beside the other captains, the team role beside the other team
+roles, so colours and the sidebar order come out right), the category to
+`CATEGORIES`, and the captain to `CAPTAINS`. `src/bot/config.ts` needs the same
+two names in `ROLE_NAMES`, the captain in `TRACKER_ROLES` and `STAFF_ROLES`, and
+`TEAM_ROLE` in `src/bot/util.ts` needs the new key — every `team:` picker, the
+attendance report and `/leaderboard` read the rosters from there, so that one
+line is what makes the bot aware of it.
+
+On a server that is already running, do **not** reach for `npm run setup` to
+apply it: that re-applies the whole blueprint, including replacing the
+permission overwrites on existing categories. Write a one-off script that adds
+only the new parts, the way `src/addTeamC.ts` does — it copies the previous
+team's category permissions, swaps in the new roles, and leaves everything else
+untouched.
 
 Applications are tickets. Someone with the `Tryout` role presses **Open a
 tryout ticket** under the `#tryout-info` explainer and the bot opens a private
@@ -170,8 +195,9 @@ Champion pools and scrims work with no key at all.
 | `/register riot-id:Name#TAG` | anyone | Links a Riot account. Run again to add another, up to five |
 | `/accounts list\|main\|remove` | anyone | See linked accounts, pick a main, unlink one |
 | `/profile user: [account]` | anyone | Rank, form, most-played champions, last five games. Defaults to the main account |
-| `/team a\|b` | anyone | The roster at a glance, with a multi-search link |
-| `/multi a\|b` | anyone | Just the op.gg multi-search link for a roster |
+| `/team a\|b\|c` | anyone | The roster at a glance, with a multi-search link |
+| `/leaderboard [sort] [team]` | anyone | The ladder, replied publicly. One place per player, `sort:` rank (default), games this week or win rate |
+| `/multi a\|b\|c` | anyone | Just the op.gg multi-search link for a roster |
 | `/pool upload image:` | anyone | Upload a tier list image |
 | `/pool view user:` | anyone | Show a player's tier list |
 | `/pool remove` | anyone | Delete one of your tier lists |

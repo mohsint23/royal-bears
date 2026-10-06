@@ -10,7 +10,7 @@
  * day that pings anybody. The rest of the week is a pace check.
  */
 
-import type { Client, Guild, TextChannel } from 'discord.js'
+import type { Client, Guild, GuildMember, TextChannel } from 'discord.js'
 import { ChannelType } from 'discord.js'
 import { RANKED_QUEUE_IDS, WEEKLY_GAME_TARGET, config } from '../config.js'
 import { accounts, matches, settings, type MatchRow } from '../db.js'
@@ -18,7 +18,7 @@ import { baseEmbed, GOLD, GREEN, RED, winrate } from '../format.js'
 import { KeyExpiredError } from '../riot.js'
 import { syncAccount } from '../sync.js'
 import { champLine, champProgress } from '../champs.js'
-import { rosterMembers, teamOf, TEAM_ROLE, type TeamKey } from '../util.js'
+import { rosterMembers, teamOf, TEAM_KEYS, TEAM_ROLE, type TeamKey } from '../util.js'
 import { staffMention } from './announce.js'
 
 const LAST_RUN = 'last_attendance'
@@ -117,7 +117,8 @@ export async function refreshWeek(since: number): Promise<string> {
 }
 
 export async function collectWeek(guild: Guild, since: number, until = Date.now()): Promise<PlayerWeek[]> {
-  const roster = [...(await rosterMembers(guild, 'a')), ...(await rosterMembers(guild, 'b'))]
+  const roster: GuildMember[] = []
+  for (const key of TEAM_KEYS) roster.push(...(await rosterMembers(guild, key)))
   const seen = new Set<string>()
   const out: PlayerWeek[] = []
 
@@ -191,7 +192,7 @@ export function buildAttendance(players: PlayerWeek[], report: Report) {
   }
 
   // One field per roster, players who are behind listed first.
-  for (const team of ['a', 'b'] as TeamKey[]) {
+  for (const team of TEAM_KEYS) {
     const squad = checked
       .filter((p) => p.team === team)
       .sort((x, y) => Number(onPace(x)) - Number(onPace(y)) || x.games.length - y.games.length)

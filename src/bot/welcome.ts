@@ -47,7 +47,7 @@ export function welcomeEmbed(ref: (name: string) => string) {
       {
         name: '④ The bot',
         value:
-          "`/profile` for anyone's accounts and form, `/team a|b` for a whole roster, " +
+          "`/profile` for anyone's accounts and form, `/team a|b|c` for a whole roster, " +
           '`/pool` for champion tier lists, `/help` for the rest. ' +
           `Keep them in ${ref('bot-commands')} where you can.`,
       },

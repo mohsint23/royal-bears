@@ -7,7 +7,7 @@ import { POSITIONS } from '../config.js'
 import { poolImages, WHOLE_POOL } from '../db.js'
 import { baseEmbed } from '../format.js'
 import { pathFor, removeImage, saveImage } from '../images.js'
-import { rosterMembers, TEAM_ROLE, type TeamKey } from '../util.js'
+import { rosterMembers, TEAM_CHOICES, TEAM_ROLE, type TeamKey } from '../util.js'
 import type { Command } from './types.js'
 
 /** Discord allows ten embeds in a message, and the header takes one of them. */
@@ -44,7 +44,7 @@ export const pool: Command = {
           o
             .setName('team')
             .setDescription('A whole roster at once, instead of one player')
-            .addChoices({ name: 'A Team', value: 'a' }, { name: 'B Team', value: 'b' }),
+            .addChoices(...TEAM_CHOICES),
         ),
     )
     .addSubcommand((s) =>

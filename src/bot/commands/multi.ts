@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js'
 import { accounts } from '../db.js'
 import { baseEmbed, opggMultiLink } from '../format.js'
-import { rosterMembers, type TeamKey } from '../util.js'
+import { rosterMembers, TEAM_CHOICES, type TeamKey } from '../util.js'
 import type { Command } from './types.js'
 
 export const multi: Command = {
@@ -13,7 +13,7 @@ export const multi: Command = {
         .setName('team')
         .setDescription('Which roster')
         .setRequired(true)
-        .addChoices({ name: 'A Team', value: 'a' }, { name: 'B Team', value: 'b' }),
+        .addChoices(...TEAM_CHOICES),
     ),
 
   async execute(i) {

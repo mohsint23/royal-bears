@@ -13,9 +13,11 @@ export const ROLE = {
   officer: 'LoL Officer',
   captainA: 'Team A Captain',
   captainB: 'Team B Captain',
+  captainC: 'Team C Captain',
   coach: 'Coach',
   aTeam: 'A Team',
   bTeam: 'B Team',
+  cTeam: 'C Team',
   sub: 'Sub',
   tryout: 'Tryout',
   member: 'Member',
@@ -91,6 +93,13 @@ export const ROLES: RoleDef[] = [
     permissions: [P.ManageMessages, P.ManageEvents, P.MentionEveryone, P.MuteMembers, P.MoveMembers],
   },
   {
+    name: ROLE.captainC,
+    color: 0x7aa3e0,
+    hoist: true,
+    mentionable: true,
+    permissions: [P.ManageMessages, P.ManageEvents, P.MentionEveryone, P.MuteMembers, P.MoveMembers],
+  },
+  {
     name: ROLE.coach,
     color: 0xc0a062,
     hoist: true,
@@ -99,6 +108,7 @@ export const ROLES: RoleDef[] = [
   },
   { name: ROLE.aTeam, color: 0x2b5fd9, hoist: true, mentionable: true },
   { name: ROLE.bTeam, color: 0x6b94e8, hoist: true, mentionable: true },
+  { name: ROLE.cTeam, color: 0x9dbaf2, hoist: true, mentionable: true },
   { name: ROLE.sub, color: 0x8fa8c8, hoist: true, mentionable: true },
   { name: ROLE.tryout, color: 0x9aa0a6, hoist: true, mentionable: true },
   // Uni students. Hoisted so they form a group of their own above Community.
@@ -180,7 +190,18 @@ const UNI = [ROLE.member, ...TEAM_STAFF]
  * The management area. The last two are roles made by hand in Discord; the
  * setup script simply skips any name it cannot find.
  */
-const MANAGEMENT = [ROLE.staff, ROLE.officer, ROLE.captainA, ROLE.captainB, 'Management', 'Vice President']
+const MANAGEMENT = [
+  ROLE.staff,
+  ROLE.officer,
+  ROLE.captainA,
+  ROLE.captainB,
+  ROLE.captainC,
+  'Management',
+  'Vice President',
+]
+
+/** Every captain, for the places all of them belong. */
+const CAPTAINS = [ROLE.captainA, ROLE.captainB, ROLE.captainC]
 
 export const CATEGORIES: CategoryDef[] = [
   {
@@ -241,7 +262,7 @@ export const CATEGORIES: CategoryDef[] = [
     // Opt in from #get-roles. Keeps lobby spam out of #general for people who
     // do not play them, and gives @Inhouses a real audience.
     name: '🎮 INHOUSES',
-    viewableBy: [ROLE.inhouses, ...TEAM_STAFF, ROLE.captainA, ROLE.captainB],
+    viewableBy: [ROLE.inhouses, ...TEAM_STAFF, ...CAPTAINS],
     // Channels are made and named by hand; the script only guards the category.
     channels: [],
   },
@@ -266,8 +287,18 @@ export const CATEGORIES: CategoryDef[] = [
     ],
   },
   {
+    name: '🥉 C TEAM',
+    viewableBy: [...TEAM_STAFF, ROLE.captainC, ROLE.cTeam, ROLE.sub],
+    channels: [
+      { name: 'chat', type: 'text', topic: 'C Team roster chat' },
+      { name: 'c-scrims', type: 'text', topic: 'Scrim scheduling and attendance' },
+      { name: 'c-vod-review', type: 'text', topic: 'VOD links and timestamped notes. One thread per game' },
+      { name: 'C Team', type: 'voice' },
+    ],
+  },
+  {
     name: '🎯 TRYOUTS',
-    viewableBy: [...TEAM_STAFF, ROLE.captainA, ROLE.captainB, ROLE.tryout],
+    viewableBy: [...TEAM_STAFF, ...CAPTAINS, ROLE.tryout],
     channels: [
       // Public to Members (uni students): someone who has not taken the Tryout
       // role yet still has to be able to read how trials work.

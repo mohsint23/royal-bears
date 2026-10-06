@@ -14,19 +14,27 @@ export function isTracker(member: GuildMember | null): boolean {
   return member.roles.cache.some((r) => TRACKER_ROLES.includes(r.name))
 }
 
-export const TEAM_ROLE = { a: ROLE_NAMES.aTeam, b: ROLE_NAMES.bTeam } as const
+export const TEAM_ROLE = { a: ROLE_NAMES.aTeam, b: ROLE_NAMES.bTeam, c: ROLE_NAMES.cTeam } as const
 export type TeamKey = keyof typeof TEAM_ROLE
 
+/** Every roster, in order. Anything that walks the teams reads this. */
+export const TEAM_KEYS = Object.keys(TEAM_ROLE) as TeamKey[]
+
 /**
- * Which roster a member belongs to. A wins outright: someone who plays for
- * A Team while captaining B Team is an A Team player, and should be counted
- * once, there.
+ * The `team:` picker, shared by every command that takes one so a new roster
+ * cannot end up listed by some of them and missing from the rest.
+ */
+export const TEAM_CHOICES = TEAM_KEYS.map((value) => ({ name: TEAM_ROLE[value], value }))
+
+/**
+ * Which roster a member belongs to. The earlier team wins outright: someone who
+ * plays for A Team while captaining B Team is an A Team player, and should be
+ * counted once, there.
  */
 export function teamOf(member: GuildMember): TeamKey | undefined {
   const names = new Set(member.roles.cache.map((r) => r.name))
-  if (names.has(ROLE_NAMES.aTeam) || names.has(ROLE_NAMES.captainA)) return 'a'
-  if (names.has(ROLE_NAMES.bTeam) || names.has(ROLE_NAMES.captainB)) return 'b'
-  return undefined
+  const CAPTAIN = { a: ROLE_NAMES.captainA, b: ROLE_NAMES.captainB, c: ROLE_NAMES.captainC } as const
+  return TEAM_KEYS.find((key) => names.has(TEAM_ROLE[key]) || names.has(CAPTAIN[key]))
 }
 
 /** Rosters come from Discord roles, so there is one source of truth. */

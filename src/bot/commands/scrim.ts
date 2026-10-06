@@ -9,7 +9,7 @@ import {
 } from 'discord.js'
 import { scrims } from '../db.js'
 import { baseEmbed } from '../format.js'
-import { isStaff } from '../util.js'
+import { isStaff, TEAM_CHOICES, TEAM_ROLE, type TeamKey } from '../util.js'
 import type { Command } from './types.js'
 
 const ANSWERS = [
@@ -30,7 +30,7 @@ export const scrim: Command = {
         .setName('team')
         .setDescription('Which roster')
         .setRequired(true)
-        .addChoices({ name: 'A Team', value: 'a' }, { name: 'B Team', value: 'b' }),
+        .addChoices(...TEAM_CHOICES),
     )
     .addStringOption((o) => o.setName('opponent').setDescription('Who against')),
 
@@ -82,7 +82,7 @@ function buildEmbed(
   const no = named('no')
 
   const embed = baseEmbed()
-    .setTitle(`${scrimData.team === 'a' ? 'A Team' : 'B Team'} scrim`)
+    .setTitle(`${TEAM_ROLE[scrimData.team as TeamKey] ?? 'Royal Bears'} scrim`)
     .setDescription(
       `**When:** ${scrimData.when}` + (scrimData.opponent ? `\n**Against:** ${scrimData.opponent}` : ''),
     )

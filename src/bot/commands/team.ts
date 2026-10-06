@@ -16,7 +16,7 @@ import {
   topChampions,
   winratePct,
 } from '../format.js'
-import { rosterMembers, TEAM_ROLE, type TeamKey } from '../util.js'
+import { rosterMembers, TEAM_CHOICES, TEAM_ROLE, type TeamKey } from '../util.js'
 import type { Command } from './types.js'
 
 const WEEK = 7 * 24 * 60 * 60 * 1000
@@ -31,7 +31,7 @@ export const team: Command = {
         .setName('team')
         .setDescription('Which roster')
         .setRequired(true)
-        .addChoices({ name: 'A Team', value: 'a' }, { name: 'B Team', value: 'b' }),
+        .addChoices(...TEAM_CHOICES),
     ),
 
   async execute(i) {

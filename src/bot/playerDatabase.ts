@@ -126,7 +126,11 @@ export async function playerDatabaseBodies(rows: Ticket[] = tickets.all()) {
 }
 
 /** Roles that mean "already on a roster" — those people are not applicants. */
-const ON_TEAM: string[] = [ROLE_NAMES.aTeam, ROLE_NAMES.bTeam, ROLE_NAMES.captainA, ROLE_NAMES.captainB, ROLE_NAMES.coach]
+const ON_TEAM: string[] = [
+  ROLE_NAMES.aTeam, ROLE_NAMES.bTeam, ROLE_NAMES.cTeam,
+  ROLE_NAMES.captainA, ROLE_NAMES.captainB, ROLE_NAMES.captainC,
+  ROLE_NAMES.coach,
+]
 
 /**
  * The tickets worth showing: one per person (their newest), and nobody who

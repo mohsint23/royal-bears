@@ -36,9 +36,11 @@ export const ROLE_NAMES = {
   officer: 'LoL Officer',
   captainA: 'Team A Captain',
   captainB: 'Team B Captain',
+  captainC: 'Team C Captain',
   coach: 'Coach',
   aTeam: 'A Team',
   bTeam: 'B Team',
+  cTeam: 'C Team',
   member: 'Member',
   community: 'Community',
   bots: 'Bots',
@@ -53,6 +55,7 @@ export const TRACKER_ROLES: string[] = [
   ROLE_NAMES.officer,
   ROLE_NAMES.captainA,
   ROLE_NAMES.captainB,
+  ROLE_NAMES.captainC,
 ]
 
 /** Anyone who may run staff-only commands. */
@@ -61,6 +64,7 @@ export const STAFF_ROLES: string[] = [
   ROLE_NAMES.officer,
   ROLE_NAMES.captainA,
   ROLE_NAMES.captainB,
+  ROLE_NAMES.captainC,
   ROLE_NAMES.coach,
 ]
 
