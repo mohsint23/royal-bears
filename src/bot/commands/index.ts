@@ -1,6 +1,7 @@
 import { accounts } from './accounts.js'
 import { applicants } from './applicants.js'
 import { champ } from './champ.js'
+import { decay } from './decay.js'
 import { help } from './help.js'
 import { leaderboard } from './leaderboard.js'
 import { letin } from './letin.js'
@@ -17,7 +18,7 @@ import type { Command } from './types.js'
 
 export const commands: Command[] = [
   register, accounts, profile, team, leaderboard, multi, pool, scrim, help,
-  pace, champ, refresh, setkey, applicants, letin,
+  pace, champ, decay, refresh, setkey, applicants, letin,
 ]
 
 export const byName = new Map<string, Command>(commands.map((c) => [c.data.name, c]))

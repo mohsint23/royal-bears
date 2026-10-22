@@ -35,6 +35,7 @@ import { hasKey } from './riot.js'
 import { startPolling } from './jobs/poll.js'
 import { startWeekly } from './jobs/weekly.js'
 import { startAttendance } from './jobs/attendance.js'
+import { startDecay } from './jobs/decay.js'
 
 // GuildMessages + MessageContent exist only so tryout tickets can read typed
 // answers; MessageContent is a privileged intent switched on in the portal.
@@ -70,10 +71,11 @@ client.once(Events.ClientReady, async (ready) => {
   startPolling(client)
   startWeekly(client)
   startAttendance(client)
+  startDecay(client)
   startTicketNudges(client)
   startWeb(client)
   console.log(
-    'Polling every 30 minutes. Weekly roundup Sundays 18:00, games check daily at 10:00, UK time.',
+    'Polling every 30 minutes. Weekly roundup Sundays 18:00, games check and decay check daily at 10:00, UK time.',
   )
 })
 
