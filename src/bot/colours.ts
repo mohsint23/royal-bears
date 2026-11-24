@@ -6,7 +6,7 @@
  * and staff role. Picking one therefore overrides your team colour; removing
  * the reaction hands it back. That is the trade-off, and it is opt-in.
  *
- * One colour at a time: reacting with a new heart drops the old role and the
+ * One colour at a time: reacting with a new colour drops the old role and the
  * old reaction. The reactions on the message are the source of truth, and the
  * bot re-reads them on boot so anything done while it was offline still lands.
  */
@@ -41,6 +41,18 @@ export const COLOURS = [
   { emoji: '🤎', name: 'Brown', hex: 0xa9714b },
   { emoji: '🩶', name: 'Grey', hex: 0xa3aab3 },
   { emoji: '🤍', name: 'White', hex: 0xf4f4f4 },
+  // Second batch. The hearts ran out, so these use emoji that hint at the colour.
+  // New entries go on the end: reactions show in the order they were added.
+  { emoji: '🍒', name: 'Crimson', hex: 0xb3122e },
+  { emoji: '🍑', name: 'Peach', hex: 0xffb38a },
+  // Not "Gold": a rank role already has that name, and roles are found by name.
+  { emoji: '⭐', name: 'Amber', hex: 0xffc83d },
+  { emoji: '🍋', name: 'Lime', hex: 0xb5e655 },
+  { emoji: '🌿', name: 'Mint', hex: 0x6ee7b7 },
+  { emoji: '🌊', name: 'Teal', hex: 0x1fa5a0 },
+  { emoji: '🫐', name: 'Navy', hex: 0x2f4fa8 },
+  { emoji: '🪻', name: 'Lavender', hex: 0xc4a7f5 },
+  { emoji: '🌸', name: 'Sakura', hex: 0xffc1dc },
 ] as const
 
 export type Colour = (typeof COLOURS)[number]
@@ -56,9 +68,12 @@ export function coloursEmbed() {
     .setTitle('🎨 Pick a name colour')
     .setDescription(
       [
-        'React with a heart to colour your name. Pick another one to switch, or remove your reaction to go back to your team or rank colour.',
+        'React to colour your name. Pick another one to switch, or remove your reaction to go back to your team or rank colour.',
         '',
-        COLOURS.map((c) => `${c.emoji} ${c.name}`).join('   '),
+        // Rows of five so 20 colours stay readable on a phone.
+        ...Array.from({ length: Math.ceil(COLOURS.length / 5) }, (_, i) =>
+          COLOURS.slice(i * 5, i * 5 + 5).map((c) => `${c.emoji} ${c.name}`).join('   '),
+        ),
         '',
         '-# One colour at a time. A colour shows over your team colour, so team players may want to leave this alone.',
       ].join('\n'),
