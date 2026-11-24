@@ -170,6 +170,8 @@ export type ChannelDef = {
    * players (Community without Member) still cannot see it.
    */
   public?: boolean
+  /** With readOnly: members can click existing reactions but not add new ones (the #colours picker). */
+  reactOnly?: boolean
   /** Forum post tags. `moderated` ones can only be applied by staff. */
   tags?: { name: string; emoji?: string; moderated?: boolean }[]
 }
@@ -241,6 +243,7 @@ export const CATEGORIES: CategoryDef[] = [
       { name: 'announcements', type: 'text', readOnly: true, topic: 'Inhouse nights, tryouts, fixtures. Everything you actually need to read' },
       { name: 'socials', type: 'text', viewableBy: UNI, topic: 'Society socials and events. Students only' },
       { name: 'get-roles', type: 'text', readOnly: true, topic: 'Pick your position, opt in to inhouses and game pings. Rank roles are handled by the bot' },
+      { name: 'colours', type: 'text', readOnly: true, reactOnly: true, topic: 'React with a heart to colour your name. One at a time; remove it to go back to your team colour' },
       { name: 'patch-notes', type: 'text', readOnly: true, topic: 'Every League patch, posted automatically by PatchBot' },
     ],
   },

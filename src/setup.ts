@@ -196,7 +196,13 @@ function channelOverwrites(
     // Keep whatever was already allowed: a public read-only channel needs to
     // hold on to its ViewChannel allow, not just gain the posting denies.
     allow: [...((everyone?.allow as bigint[]) ?? [])],
-    deny: [...((everyone?.deny as bigint[]) ?? []), P.SendMessages, P.CreatePublicThreads, P.CreatePrivateThreads],
+    deny: [
+      ...((everyone?.deny as bigint[]) ?? []),
+      P.SendMessages,
+      P.CreatePublicThreads,
+      P.CreatePrivateThreads,
+      ...(channel.reactOnly ? [P.AddReactions] : []),
+    ],
   })
 
   // Only hand posting rights to roles that can already see the category.
