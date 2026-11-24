@@ -16,6 +16,7 @@ export const GAMES = [
   { key: 'deadlock', role: 'Deadlock', emoji: '💀' },
   { key: 'amongus', role: 'Among Us', emoji: '🔪' },
   { key: 'dbd', role: 'Dead by Daylight', emoji: '🪝' },
+  { key: 'minecraft', role: 'Minecraft', emoji: '⛏️' },
 ] as const
 
 export type Game = (typeof GAMES)[number]
