@@ -1,53 +1,61 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Soundbard Dominion: a nod to Bard. Big hood, shadowed face, golden chimes, and a crown. Original artwork. -->
   <defs>
-    <radialGradient id="bg" cx="50%" cy="34%" r="78%">
-      <stop offset="0%" stop-color="#2f66e0"/>
-      <stop offset="58%" stop-color="#1b3f96"/>
-      <stop offset="100%" stop-color="#0a1730"/>
+    <radialGradient id="cosmos" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#3b3fa8"/><stop offset="50%" stop-color="#1c1c62"/><stop offset="100%" stop-color="#080822"/>
     </radialGradient>
+    <linearGradient id="cloth" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffaf0"/><stop offset="60%" stop-color="#efe1c2"/><stop offset="100%" stop-color="#c9b48a"/>
+    </linearGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f7d97a"/>
-      <stop offset="46%" stop-color="#e6b422"/>
-      <stop offset="100%" stop-color="#b3830f"/>
+      <stop offset="0%" stop-color="#ffe89a"/><stop offset="52%" stop-color="#f0b82a"/><stop offset="100%" stop-color="#b07a0a"/>
     </linearGradient>
-    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f9e08b"/>
-      <stop offset="55%" stop-color="#e6b422"/>
-      <stop offset="100%" stop-color="#c1900f"/>
-    </linearGradient>
+    <radialGradient id="void" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#1d1f5c"/><stop offset="100%" stop-color="#05061a"/>
+    </radialGradient>
+    <radialGradient id="chimeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffe9a0" stop-opacity="0.9"/><stop offset="100%" stop-color="#ffcf4a" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-
-  <rect width="512" height="512" fill="url(#bg)"/>
-  <g transform="translate(256 262) scale(0.97) translate(-256 -238)">
-
-  <!-- crown -->
-  <path d="M172 118 L172 66 L206 96 L256 44 L306 96 L340 66 L340 118 Z"
-        fill="url(#gold)" stroke="#7d5c08" stroke-width="5" stroke-linejoin="round"/>
-  <circle cx="256" cy="40" r="12" fill="#f7d97a" stroke="#7d5c08" stroke-width="4"/>
-
-  <!-- ears -->
-  <circle cx="152" cy="212" r="54" fill="url(#fur)" stroke="#6b4d05" stroke-width="7"/>
-  <circle cx="360" cy="212" r="54" fill="url(#fur)" stroke="#6b4d05" stroke-width="7"/>
-  <circle cx="152" cy="212" r="25" fill="#8a5a2b"/>
-  <circle cx="360" cy="212" r="25" fill="#8a5a2b"/>
-
-  <!-- head -->
-  <ellipse cx="256" cy="308" rx="140" ry="126" fill="url(#fur)" stroke="#6b4d05" stroke-width="8"/>
-
-  <!-- muzzle -->
-  <ellipse cx="256" cy="364" rx="76" ry="58" fill="#f6e6bd" stroke="#6b4d05" stroke-width="6"/>
-  <path d="M232 348 Q256 336 280 348 Q280 366 256 372 Q232 366 232 348 Z" fill="#20160a"/>
-  <path d="M256 372 L256 392 M256 392 Q236 404 222 390 M256 392 Q276 404 290 390"
-        stroke="#20160a" stroke-width="8" stroke-linecap="round" fill="none"/>
-
-  <!-- eyes -->
-  <ellipse cx="204" cy="278" rx="18" ry="17" fill="#1a1206"/>
-  <ellipse cx="308" cy="278" rx="18" ry="17" fill="#1a1206"/>
-  <circle cx="210" cy="269" r="6" fill="#ffffff" opacity="0.9"/>
-  <circle cx="314" cy="269" r="6" fill="#ffffff" opacity="0.9"/>
-
-  <!-- brow, to stop it reading as a teddy bear -->
-  <path d="M178 246 L228 258 M334 246 L284 258" stroke="#5c4204" stroke-width="15" stroke-linecap="round"/>
+  <rect width="512" height="512" fill="url(#cosmos)"/>
+  <g fill="#fff3c4">
+    <circle cx="86" cy="96" r="4"/><circle cx="430" cy="78" r="3.5"/><circle cx="452" cy="232" r="3"/>
+    <circle cx="62" cy="300" r="3"/><circle cx="150" cy="60" r="2.5"/><circle cx="372" cy="40" r="2.5"/>
   </g>
-  <circle cx="256" cy="256" r="238" fill="none" stroke="url(#gold)" stroke-width="10" opacity="0.5"/>
+
+  <!-- robe and hood, one silhouette: the hood's tip flops back to the right -->
+  <path d="M256 128
+           C332 120 394 152 426 204
+           C442 230 454 256 462 286
+           C442 270 422 262 404 262
+           C418 316 436 374 470 512
+           L42 512
+           C76 360 92 300 104 246
+           C112 178 180 132 256 128 Z" fill="url(#cloth)"/>
+  <!-- gold trim down the front of the robe -->
+  <path d="M232 384 L280 384 L300 512 L212 512 Z" fill="url(#gold)"/>
+  <!-- face: a shadowed opening ringed in gold -->
+  <path d="M256 194 C306 194 334 236 334 288 C334 340 300 372 256 372 C212 372 178 340 178 288 C178 236 206 194 256 194 Z"
+        fill="url(#void)" stroke="url(#gold)" stroke-width="14"/>
+  <!-- two faint eyes in the dark -->
+  <ellipse cx="230" cy="290" rx="9" ry="13" fill="#ffe9a0" opacity="0.85"/>
+  <ellipse cx="282" cy="290" rx="9" ry="13" fill="#ffe9a0" opacity="0.85"/>
+
+  <!-- crown, floating above the hood -->
+  <path d="M206 112 L206 70 L232 90 L256 54 L280 90 L306 70 L306 112 Z" fill="url(#gold)"/>
+  <circle cx="206" cy="66" r="8" fill="url(#gold)"/>
+  <circle cx="256" cy="50" r="9" fill="url(#gold)"/>
+  <circle cx="306" cy="66" r="8" fill="url(#gold)"/>
+
+  <!-- chimes: glowing gold orbs with a ring -->
+  <g>
+    <circle cx="96" cy="190" r="34" fill="url(#chimeGlow)"/>
+    <circle cx="96" cy="190" r="15" fill="url(#gold)"/>
+    <ellipse cx="96" cy="190" rx="26" ry="9" fill="none" stroke="#ffe08a" stroke-width="4" transform="rotate(-20 96 190)"/>
+    <circle cx="446" cy="320" r="30" fill="url(#chimeGlow)"/>
+    <circle cx="446" cy="320" r="13" fill="url(#gold)"/>
+    <ellipse cx="446" cy="320" rx="23" ry="8" fill="none" stroke="#ffe08a" stroke-width="4" transform="rotate(20 446 320)"/>
+    <circle cx="70" cy="380" r="24" fill="url(#chimeGlow)"/>
+    <circle cx="70" cy="380" r="10" fill="url(#gold)"/>
+  </g>
 </svg>
