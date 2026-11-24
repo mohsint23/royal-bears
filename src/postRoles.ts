@@ -1,15 +1,16 @@
 /**
- * Puts the position-picker message in #get-roles.
+ * Puts the four role-picker messages in #get-roles (lanes, games, inhouses, tryouts).
  *
  *   npm run post-roles
  *
- * Re-runnable. If the bot has already posted one it is edited in place rather
- * than a second one being added, so the channel stays a single message.
+ * Re-runnable. Messages the bot already posted are edited in place rather
+ * than new ones being added.
  */
 
 import { ChannelType, Client, GatewayIntentBits, type TextChannel } from 'discord.js'
 import { config } from './bot/config.js'
-import { rolesEmbed, roleButtons, roleFiles } from './bot/roles.js'
+import { roleMessages } from './bot/roles.js'
+import { syncBotMessages } from './bot/util.js'
 
 const channelName = process.argv[2] || 'get-roles'
 const client = new Client({ intents: [GatewayIntentBits.Guilds] })
@@ -34,22 +35,10 @@ client.once('clientReady', async (ready) => {
       return found ? `<#${found.id}>` : `#${name}`
     }
 
-    const embed = rolesEmbed(ref)
-    const body = { embeds: [embed], components: roleButtons(), files: roleFiles() }
-
-    const recent = await channel.messages.fetch({ limit: 50 })
-    const mine = recent.find(
-      (m) => m.author.id === ready.user.id && m.components.length > 0,
-    )
-
-    if (mine) {
-      await mine.edit(body)
-      console.log(`Updated the existing picker in #${channel.name}.`)
-    } else {
-      const sent = await channel.send(body)
-      await sent.pin('Position roles').catch(() => {})
-      console.log(`Posted the picker in #${channel.name}.`)
-    }
+    // Edits the bot's messages in place, sends any missing ones, deletes extras.
+    // Messages other people posted in the channel are left alone.
+    await syncBotMessages(channel, ready.user.id, roleMessages(ref))
+    console.log(`#${channel.name} now holds ${roleMessages(ref).length} picker messages.`)
 
     console.log('The bot must stay running for the buttons to do anything.')
   } catch (err) {

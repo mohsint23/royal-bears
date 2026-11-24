@@ -14,6 +14,7 @@ import {
   AttachmentBuilder,
   ButtonBuilder,
   ButtonStyle,
+  EmbedBuilder,
   MessageFlags,
   PermissionFlagsBits,
   type ButtonInteraction,
@@ -22,7 +23,7 @@ import {
   type Role,
 } from 'discord.js'
 import { POSITIONS, type Position } from './config.js'
-import { baseEmbed, GOLD } from './format.js'
+import { GOLD } from './format.js'
 import { GAMES } from './games.js'
 
 const PREFIX = 'role:'
@@ -46,94 +47,72 @@ const EMOJI: Record<Position, string> = {
 
 export const isRoleButton = (customId: string) => customId.startsWith(PREFIX)
 
-export function roleButtons() {
+const button = (id: string, label: string, emoji: string, style = ButtonStyle.Secondary) =>
+  new ButtonBuilder().setCustomId(id).setLabel(label).setEmoji(emoji).setStyle(style)
+
+const row = (...buttons: ButtonBuilder[]) => new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons)
+
+/** A plain gold card: no footer or timestamp, since four of them sit stacked. */
+const card = (title: string, description: string) =>
+  new EmbedBuilder().setColor(GOLD).setTitle(title).setDescription(description)
+
+/**
+ * #get-roles as four messages, one per kind of role, in this order. Kept in one
+ * list so `npm run post-roles` can edit them in place without ever drifting
+ * from the buttons the bot listens for.
+ *
+ * `ref` turns a channel name into a mention, falling back to plain #name.
+ */
+export function roleMessages(ref: (name: string) => string) {
+  const lanes = card(
+    '🧭 Your lanes',
+    "**Tap the lanes you play.** Tap one again to take it off.\n" +
+      "They're just tags, so captains can ping the right people when a game needs a fifth.",
+  )
+    .setImage(`attachment://${BANNER}`)
+    .addFields(
+      { name: 'Play more than one lane?', value: "Pick them all. There's no limit, and no downside to being honest about a fill." },
+      {
+        name: 'Rank roles sort themselves out',
+        value: 'Run `/register riot-id:You#TAG` once. You get Iron through Challenger off your best account and the bot keeps it current.',
+      },
+    )
+
+  const games = card(
+    '🎮 Game roles',
+    'Tap a game to get pinged when people want to play. Tap it again to leave.\n\n' +
+      'Only people with a game role can ping it: run `/ping game:` and the bot does the @.',
+  )
+
+  const inhouses = card(
+    '🏠 Inhouses and customs',
+    `Tap **Inhouses** to open ${ref('inhouses')} and ${ref('custom-lobbies')} plus their voice channels. ` +
+      '@Inhouses is the ping when a lobby needs bodies. Tap again to leave.',
+  )
+
+  const tryouts = card(
+    '🎯 Tryouts (uni students)',
+    `Tap **I'm here to trial** to get the Tryout role, which opens the Tryout Lobby. ` +
+      `Then open your ticket from ${ref('tryout-info')}. Changed your mind? Tap it again.\n\n` +
+      'Needs the Member role. Ask staff if you are a student without it.',
+  )
+
   return [
-    new ActionRowBuilder<ButtonBuilder>().addComponents(
-      ...POSITIONS.map((position) =>
-        new ButtonBuilder()
-          .setCustomId(`${PREFIX}${position}`)
-          .setLabel(position)
-          .setEmoji(EMOJI[position])
-          .setStyle(ButtonStyle.Secondary),
-      ),
-    ),
-    new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder()
-        .setCustomId(INHOUSES)
-        .setLabel('Inhouses')
-        .setEmoji('🎮')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId(TRYOUT)
-        .setLabel("I'm here to trial")
-        .setEmoji('🎯')
-        .setStyle(ButtonStyle.Success),
-      new ButtonBuilder()
-        .setCustomId(CLEAR)
-        .setLabel('Clear my lanes')
-        .setEmoji('🧹')
-        .setStyle(ButtonStyle.Secondary),
-    ),
-    new ActionRowBuilder<ButtonBuilder>().addComponents(
-      ...GAMES.map((g) =>
-        new ButtonBuilder()
-          .setCustomId(`${GAME}${g.key}`)
-          .setLabel(g.role)
-          .setEmoji(g.emoji)
-          .setStyle(ButtonStyle.Secondary),
-      ),
-    ),
+    {
+      embeds: [lanes],
+      files: [new AttachmentBuilder(`./assets/${BANNER}`, { name: BANNER })],
+      components: [
+        row(...POSITIONS.map((p) => button(`${PREFIX}${p}`, p, EMOJI[p]))),
+        row(button(CLEAR, 'Clear my lanes', '🧹')),
+      ],
+    },
+    { embeds: [games], components: [row(...GAMES.map((g) => button(`${GAME}${g.key}`, g.role, g.emoji)))] },
+    { embeds: [inhouses], components: [row(button(INHOUSES, 'Inhouses', '🎮', ButtonStyle.Primary))] },
+    { embeds: [tryouts], components: [row(button(TRYOUT, "I'm here to trial", '🎯', ButtonStyle.Success))] },
   ]
 }
 
-/** The header art. Re-sent on every edit, since editing replaces attachments. */
-export function roleFiles() {
-  return [new AttachmentBuilder(`./assets/${BANNER}`, { name: BANNER })]
-}
-
-/** `ref` turns a channel name into a mention, falling back to plain #name. */
-export function rolesEmbed(ref: (name: string) => string) {
-  return baseEmbed()
-    .setColor(GOLD)
-    .setImage(`attachment://${BANNER}`)
-    .setDescription(
-      "**Tap the lanes you play.** Tap one again to take it off — same button does both.\n" +
-        "They're just tags, so captains can ping the right people when a game needs a fifth.",
-    )
-    .addFields(
-      {
-        name: 'Play more than one lane?',
-        value: "Pick them all. There's no limit, and no downside to being honest about a fill.",
-      },
-      {
-        name: '🎮 Inhouses and customs',
-        value:
-          `Hit **Inhouses** to open ${ref('inhouses')} and ${ref('custom-lobbies')} plus their voice channels. ` +
-          '@Inhouses is the ping when a lobby needs bodies. Tap again to leave.',
-      },
-      {
-        name: '🎮 Game roles',
-        value:
-          'Tap **League**, **Overwatch**, **Deadlock** or **Among Us** to get pinged when people want a game. ' +
-          'Only people with a game role can ping it: use `/ping game:` and the bot does the @. Tap again to leave.',
-      },
-      {
-        name: '🎯 Here to trial? (uni students)',
-        value:
-          `Hit **I'm here to trial** and you're in — it gets you the Tryout role, which opens ` +
-          `the Tryout Lobby. Then open your ticket from ${ref('tryout-info')}. ` +
-          'Changed your mind? Tap it again. Needs the Member role — ask staff if you are a student without it.',
-      },
-      {
-        name: 'Rank roles sort themselves out',
-        value:
-          'Run `/register riot-id:You#TAG` once. You get Iron through Challenger off your best ' +
-          'account and the bot keeps it current — nothing to pick here.',
-      },
-    )
-}
-
-/** Everything a member can hand themselves from this message. */
+/** Everything a member can hand themselves from #get-roles. */
 function selfAssignable(guild: Guild): Role[] {
   return [...POSITIONS, TRYOUT_ROLE, INHOUSES_ROLE, ...GAMES.map((g) => g.role)]
     .map((name) => guild.roles.cache.find((r) => r.name === name))

@@ -11,7 +11,7 @@ import { accounts } from './bot/db.js'
 import { buildProfile } from './bot/commands/profile.js'
 import { buildTeam } from './bot/commands/team.js'
 import { buildLeaderboard } from './bot/commands/leaderboard.js'
-import { rolesEmbed } from './bot/roles.js'
+import { roleMessages } from './bot/roles.js'
 import { summaryEmbed, summaryButtons } from './bot/tickets.js'
 import { QUESTIONS } from './bot/ticketFlow.js'
 import type { Ticket } from './bot/db.js'
@@ -137,7 +137,7 @@ const bodies =
   // Both orderings, since the bolded column and the headline change with them.
   message(buildLeaderboard('Royal Bears ladder', ladder, { sort: 'rank', since: week }).toJSON()) +
   message(buildLeaderboard('A Team ladder', ladder, { sort: 'games', since: week, missing: ['Connor'] }).toJSON()) +
-  message(rolesEmbed((n) => `#${n}`).toJSON()) +
+  roleMessages((n) => `#${n}`).map((m) => message(m.embeds[0]!.toJSON())).join('') +
   '<div class="buttons">' +
   ['⬆️ Top', '🌿 Jungle', '✳️ Mid', '🏹 ADC', '🛡️ Support'].map((b) => `<span class="btn">${b}</span>`).join('') +
   '</div>' +
