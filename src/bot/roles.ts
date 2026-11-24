@@ -52,6 +52,13 @@ const button = (id: string, label: string, emoji: string, style = ButtonStyle.Se
 
 const row = (...buttons: ButtonBuilder[]) => new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons)
 
+/** Discord allows five buttons a row. Spread them evenly (6 → 3 + 3, not 5 + 1). */
+function evenRows(buttons: ButtonBuilder[]) {
+  const rows = Math.ceil(buttons.length / 5)
+  const per = Math.ceil(buttons.length / rows)
+  return Array.from({ length: rows }, (_, i) => row(...buttons.slice(i * per, i * per + per)))
+}
+
 /** A plain gold card: no footer or timestamp, since four of them sit stacked. */
 const card = (title: string, description: string) =>
   new EmbedBuilder().setColor(GOLD).setTitle(title).setDescription(description)
@@ -106,7 +113,7 @@ export function roleMessages(ref: (name: string) => string) {
         row(button(CLEAR, 'Clear my lanes', '🧹')),
       ],
     },
-    { embeds: [games], components: [row(...GAMES.map((g) => button(`${GAME}${g.key}`, g.role, g.emoji)))] },
+    { embeds: [games], components: evenRows(GAMES.map((g) => button(`${GAME}${g.key}`, g.role, g.emoji))) },
     { embeds: [inhouses], components: [row(button(INHOUSES, 'Inhouses', '🎮', ButtonStyle.Primary))] },
     { embeds: [tryouts], components: [row(button(TRYOUT, "I'm here to trial", '🎯', ButtonStyle.Success))] },
   ]
