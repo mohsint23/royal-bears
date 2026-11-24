@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
+  <!-- Soundbard Dominion banner: the hooded bard on the right, a trail of chimes arcing in from the left. -->
+  <defs>
+    <radialGradient id="cosmos" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#3b3fa8"/><stop offset="50%" stop-color="#1c1c62"/><stop offset="100%" stop-color="#080822"/>
+    </radialGradient>
+    <linearGradient id="cloth" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffaf0"/><stop offset="60%" stop-color="#efe1c2"/><stop offset="100%" stop-color="#c9b48a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe89a"/><stop offset="52%" stop-color="#f0b82a"/><stop offset="100%" stop-color="#b07a0a"/>
+    </linearGradient>
+    <radialGradient id="void" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#1d1f5c"/><stop offset="100%" stop-color="#05061a"/>
+    </radialGradient>
+    <radialGradient id="chimeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffe9a0" stop-opacity="0.9"/><stop offset="100%" stop-color="#ffcf4a" stop-opacity="0"/>
+    </radialGradient>
+  <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0a2a"/><stop offset="45%" stop-color="#22237a"/><stop offset="100%" stop-color="#3a2a7a"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6c63ff" stop-opacity="0.55"/><stop offset="100%" stop-color="#6c63ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#05061a" stop-opacity="0"/><stop offset="100%" stop-color="#05061a" stop-opacity="0.75"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#sky)"/>
+  <g fill="#fff3c4"><circle cx="341" cy="87" r="3" opacity="0.9"/><circle cx="59" cy="47" r="1.5" opacity="0.7"/><circle cx="606" cy="39" r="2" opacity="0.5"/><circle cx="98" cy="232" r="3" opacity="0.5"/><circle cx="256" cy="56" r="3" opacity="0.5"/><circle cx="856" cy="299" r="1.5" opacity="0.5"/><circle cx="655" cy="331" r="1.5" opacity="0.9"/><circle cx="609" cy="213" r="1.5" opacity="0.5"/><circle cx="57" cy="295" r="2" opacity="0.7"/><circle cx="439" cy="83" r="1.5" opacity="0.9"/><circle cx="325" cy="296" r="2" opacity="0.5"/><circle cx="605" cy="302" r="2" opacity="0.7"/><circle cx="109" cy="290" r="1.5" opacity="0.9"/><circle cx="71" cy="326" r="2" opacity="0.7"/><circle cx="706" cy="282" r="3" opacity="0.7"/><circle cx="486" cy="309" r="3" opacity="0.7"/><circle cx="316" cy="137" r="2" opacity="0.9"/><circle cx="808" cy="134" r="1.5" opacity="0.9"/><circle cx="317" cy="278" r="3" opacity="0.7"/><circle cx="756" cy="239" r="2.5" opacity="0.9"/><circle cx="84" cy="70" r="3" opacity="0.5"/><circle cx="785" cy="185" r="2" opacity="0.7"/><circle cx="441" cy="30" r="1.5" opacity="0.9"/><circle cx="596" cy="414" r="2.5" opacity="0.7"/><circle cx="721" cy="189" r="3" opacity="0.9"/><circle cx="826" cy="243" r="1.5" opacity="0.5"/><circle cx="286" cy="252" r="1.5" opacity="0.5"/><circle cx="758" cy="369" r="2.5" opacity="0.9"/><circle cx="601" cy="358" r="3" opacity="0.7"/><circle cx="743" cy="207" r="2.5" opacity="0.5"/><circle cx="482" cy="191" r="2" opacity="0.9"/><circle cx="129" cy="262" r="1.5" opacity="0.5"/><circle cx="796" cy="157" r="2" opacity="0.9"/><circle cx="263" cy="213" r="3" opacity="0.7"/><circle cx="92" cy="95" r="3" opacity="0.7"/><circle cx="572" cy="152" r="2" opacity="0.7"/><circle cx="894" cy="291" r="2.5" opacity="0.9"/><circle cx="435" cy="193" r="3" opacity="0.5"/><circle cx="164" cy="52" r="2" opacity="0.5"/><circle cx="247" cy="347" r="2" opacity="0.5"/><circle cx="506" cy="311" r="2" opacity="0.7"/><circle cx="298" cy="12" r="2" opacity="0.7"/><circle cx="557" cy="199" r="2.5" opacity="0.5"/><circle cx="717" cy="273" r="1.5" opacity="0.7"/><circle cx="931" cy="409" r="3" opacity="0.7"/><circle cx="418" cy="211" r="1.5" opacity="0.7"/><circle cx="659" cy="215" r="1.5" opacity="0.5"/><circle cx="78" cy="116" r="3" opacity="0.5"/><circle cx="122" cy="184" r="1.5" opacity="0.5"/><circle cx="10" cy="300" r="2" opacity="0.9"/><circle cx="113" cy="196" r="1.5" opacity="0.5"/><circle cx="905" cy="116" r="3" opacity="0.5"/><circle cx="659" cy="139" r="2.5" opacity="0.9"/><circle cx="382" cy="252" r="1.5" opacity="0.5"/><circle cx="879" cy="259" r="3" opacity="0.7"/><circle cx="505" cy="169" r="1.5" opacity="0.5"/><circle cx="114" cy="393" r="2.5" opacity="0.9"/><circle cx="281" cy="255" r="2" opacity="0.9"/><circle cx="33" cy="115" r="2.5" opacity="0.5"/><circle cx="716" cy="288" r="1.5" opacity="0.9"/><circle cx="315" cy="339" r="1.5" opacity="0.9"/><circle cx="875" cy="143" r="2.5" opacity="0.5"/><circle cx="374" cy="405" r="2" opacity="0.9"/><circle cx="564" cy="408" r="2.5" opacity="0.9"/><circle cx="238" cy="323" r="2" opacity="0.5"/><circle cx="847" cy="215" r="2" opacity="0.5"/><circle cx="540" cy="262" r="2.5" opacity="0.9"/><circle cx="39" cy="24" r="2.5" opacity="0.7"/><circle cx="275" cy="109" r="2.5" opacity="0.7"/><circle cx="837" cy="380" r="2.5" opacity="0.7"/></g>
+  <circle cx="660" cy="300" r="300" fill="url(#halo)"/>
+  <!-- sound waves rolling out of the hood -->
+  <g fill="none" stroke="#ffd96a" stroke-linecap="round">
+    <path d="M470 220 A230 230 0 0 0 470 420" stroke-width="10" opacity="0.55"/>
+    <path d="M420 190 A290 290 0 0 0 420 460" stroke-width="8" opacity="0.35"/>
+    <path d="M372 165 A350 350 0 0 0 372 500" stroke-width="6" opacity="0.2"/>
+  </g>
+  <!-- the chime trail -->
+  <path d="M20 480 C150 400 280 320 420 230" fill="none" stroke="#ffe08a" stroke-width="3" stroke-dasharray="2 14" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="70" cy="430" r="21" fill="url(#chimeGlow)"/><circle cx="70" cy="430" r="9" fill="url(#gold)"/><ellipse cx="70" cy="430" rx="16" ry="5" fill="none" stroke="#ffe08a" stroke-width="3.5" transform="rotate(-15 70 430)"/><circle cx="170" cy="360" r="25" fill="url(#chimeGlow)"/><circle cx="170" cy="360" r="11" fill="url(#gold)"/><ellipse cx="170" cy="360" rx="19" ry="7" fill="none" stroke="#ffe08a" stroke-width="3.5" transform="rotate(-20 170 360)"/><circle cx="285" cy="300" r="30" fill="url(#chimeGlow)"/><circle cx="285" cy="300" r="13" fill="url(#gold)"/><ellipse cx="285" cy="300" rx="23" ry="8" fill="none" stroke="#ffe08a" stroke-width="3.5" transform="rotate(-18 285 300)"/><circle cx="395" cy="232" r="34" fill="url(#chimeGlow)"/><circle cx="395" cy="232" r="15" fill="url(#gold)"/><ellipse cx="395" cy="232" rx="26" ry="9" fill="none" stroke="#ffe08a" stroke-width="3.5" transform="rotate(-10 395 232)"/>
+  <g transform="translate(404 28)">
+    <!-- robe and hood, one silhouette: the hood's tip flops back to the right -->
+  <path d="M256 128
+           C332 120 394 152 426 204
+           C442 230 454 256 462 286
+           C442 270 422 262 404 262
+           C418 316 436 374 470 512
+           L42 512
+           C76 360 92 300 104 246
+           C112 178 180 132 256 128 Z" fill="url(#cloth)"/>
+  <!-- gold trim down the front of the robe -->
+  <path d="M232 384 L280 384 L300 512 L212 512 Z" fill="url(#gold)"/>
+  <!-- face: a shadowed opening ringed in gold -->
+  <path d="M256 194 C306 194 334 236 334 288 C334 340 300 372 256 372 C212 372 178 340 178 288 C178 236 206 194 256 194 Z"
+        fill="url(#void)" stroke="url(#gold)" stroke-width="14"/>
+  <!-- two faint eyes in the dark -->
+  <ellipse cx="230" cy="290" rx="9" ry="13" fill="#ffe9a0" opacity="0.85"/>
+  <ellipse cx="282" cy="290" rx="9" ry="13" fill="#ffe9a0" opacity="0.85"/>
+
+  <!-- crown, floating above the hood -->
+  <path d="M206 112 L206 70 L232 90 L256 54 L280 90 L306 70 L306 112 Z" fill="url(#gold)"/>
+  <circle cx="206" cy="66" r="8" fill="url(#gold)"/>
+  <circle cx="256" cy="50" r="9" fill="url(#gold)"/>
+  <circle cx="306" cy="66" r="8" fill="url(#gold)"/>
+
+  
+  </g>
+  <rect y="380" width="960" height="160" fill="url(#fade)"/>
+</svg>
