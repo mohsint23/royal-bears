@@ -99,7 +99,7 @@ export async function applySheetEdit(
   let value: string | null = raw || null
   if (column === 'team' && value) {
     const team = parseTeam(value)
-    if (!team) return { ok: false, error: 'team must be A, B or A and B' }
+    if (!team) return { ok: false, error: 'team must be A, B, C, A or B, B or C, or Any' }
     value = team
   }
   if (column === 'riot_id' && value && !parseRiotId(value)) return { ok: false, error: 'IGN must be Name#TAG' }

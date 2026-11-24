@@ -10,7 +10,7 @@ import { config, ROLE_NAMES } from './config.js'
 import { accounts, tickets, ticketAnswers, type Ticket } from './db.js'
 import { baseEmbed, BRAND, GREY, tierColour } from './format.js'
 import { opggUrl, tierListFile } from './tickets.js'
-import { isComplete, QUESTIONS, type TeamChoice } from './ticketFlow.js'
+import { isComplete, QUESTIONS } from './ticketFlow.js'
 import { pushToGoogleSheet } from './sheet.js'
 import { syncBotMessages } from './util.js'
 
@@ -22,8 +22,15 @@ const STATUS: Record<string, string> = {
   closed: '🔒',
 }
 
-const TEAM_LABEL: Record<TeamChoice, string> = { A: 'A Team', B: 'B Team', 'A and B': 'A or B Team' }
-const TEAM_ORDER: TeamChoice[] = ['A', 'B', 'A and B']
+const TEAM_LABEL: Record<string, string> = {
+  A: 'A Team', B: 'B Team', C: 'C Team', 'A or B': 'A or B Team', 'B or C': 'B or C Team', Any: 'any team',
+  'A and B': 'A or B Team', // last split's wording, still in old tickets
+}
+const TEAM_ORDER: string[] = ['A', 'A or B', 'A and B', 'B', 'B or C', 'C', 'Any']
+const teamRank = (team: string | null) => {
+  const i = TEAM_ORDER.indexOf(team ?? '')
+  return i === -1 ? TEAM_ORDER.length : i
+}
 
 const STATUS_LABEL: Record<string, string> = {
   open: 'Waiting on a captain',
@@ -52,7 +59,7 @@ export function applicantCard(t: Ticket): { embeds: EmbedBuilder[]; files: Attac
   const embed = baseEmbed()
     .setColor(colourFor(t.peak_rank))
     .setTitle(`${STATUS[t.status] ?? ''} ${t.username}`)
-    .setDescription(`<@${t.discord_id}> · applying for **${t.team ? TEAM_LABEL[t.team as TeamChoice] : '—'}**`)
+    .setDescription(`<@${t.discord_id}> · applying for **${t.team ? (TEAM_LABEL[t.team] ?? t.team) : '—'}**`)
     .addFields(
       { name: 'IGN / op.gg', value: link ? `[${link.label}](${link.url})` : (t.riot_id ?? '—'), inline: true },
       { name: 'Year', value: t.year ?? '—', inline: true },
@@ -113,7 +120,7 @@ export async function playerDatabaseBodies(rows: Ticket[] = tickets.all()) {
 
   // Grouped by team, then oldest application first, so the order is stable.
   const sorted = [...finished].sort(
-    (a, b) => TEAM_ORDER.indexOf(a.team as TeamChoice) - TEAM_ORDER.indexOf(b.team as TeamChoice) || a.created_at - b.created_at,
+    (a, b) => teamRank(a.team) - teamRank(b.team) || a.created_at - b.created_at,
   )
   for (const t of sorted) bodies.push(applicantCard(t))
 
@@ -138,7 +145,10 @@ const ON_TEAM: string[] = [
  */
 export async function visibleApplicants(guild: Guild): Promise<Ticket[]> {
   const newest = new Map<string, Ticket>()
+  // Only this split: each split starts its sheet and board empty (TRYOUTS_SINCE).
+  const since = config.tryoutsSince ?? 0
   for (const t of tickets.all()) {
+    if (t.created_at < since) continue
     const seen = newest.get(t.discord_id)
     if (!seen || t.created_at > seen.created_at) newest.set(t.discord_id, t)
   }

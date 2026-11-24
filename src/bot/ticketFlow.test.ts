@@ -13,15 +13,25 @@ test('eight questions in the agreed order, numbered, image last', () => {
   assert.equal(QUESTIONS[2]!.kind, 'team')
 })
 
-test('parseTeam understands the ways people write A, B or both', () => {
+test('parseTeam understands the ways people write A, B, C or several', () => {
   assert.equal(parseTeam('A'), 'A')
   assert.equal(parseTeam('team b'), 'B')
-  assert.equal(parseTeam('A and B'), 'A and B')
-  assert.equal(parseTeam('both'), 'A and B')
-  assert.equal(parseTeam('a & b'), 'A and B')
-  assert.equal(parseTeam('either'), 'A and B')
-  assert.equal(parseTeam('c'), undefined)
+  assert.equal(parseTeam('C'), 'C')
+  assert.equal(parseTeam('c team'), 'C')
+  assert.equal(parseTeam('B or C'), 'B or C')
+  assert.equal(parseTeam('b/c'), 'B or C')
+  assert.equal(parseTeam('team b and team c'), 'B or C')
+  assert.equal(parseTeam('a & b'), 'A or B')
+  assert.equal(parseTeam('ab'), 'A or B')
+  assert.equal(parseTeam('A or B'), 'A or B')
+  assert.equal(parseTeam('any'), 'Any')
+  assert.equal(parseTeam('either'), 'Any')
+  assert.equal(parseTeam('a, b or c'), 'Any')
+  assert.equal(parseTeam('A and B'), 'A or B') // last split's stored answer
+  assert.equal(parseTeam('both'), undefined) // both of which, now there are three?
+  assert.equal(parseTeam('d'), undefined)
   assert.equal(parseTeam('yes'), undefined)
+  assert.equal(parseTeam(''), undefined)
 })
 
 test('parseRiotId accepts Name#TAG only', () => {

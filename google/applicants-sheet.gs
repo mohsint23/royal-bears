@@ -7,6 +7,11 @@
  *      permission the first time), and
  *   2. Deploy → Manage deployments → pencil → Version: New version → Deploy.
  *
+ * New split: File → Make a copy of last split's sheet (this script comes with
+ * it), set a fresh SECRET, run `startNewSplit` once instead of `setup`, then
+ * Deploy → New deployment → Web app (execute as me, anyone) and give the bot
+ * the new URL. The old sheet stays behind as the archive.
+ *
  * The bot POSTs the whole table on every change and doPost redraws the
  * "Applicants" tab. When someone edits a cell here, onSheetEdit sends that one
  * change back to the bot, which updates the ticket and the Discord board.
@@ -26,7 +31,8 @@ const STATUS_COLOURS = {
   closed: '#e2e5ea',
 }
 const STATUSES = ['open', 'trialling', 'accepted', 'declined', 'closed']
-const TEAMS = ['A', 'B', 'A and B']
+const TEAMS = ['A', 'B', 'C', 'A or B', 'B or C', 'Any']
+const SCORES_TAB = 'Scores'
 
 /** Columns a captain may edit here; anything else is redrawn from the bot. */
 const EDITABLE = ['IGN', 'Peak rank', 'Current rank', 'Year', 'Team', 'Main role', 'Open to other roles?', 'Status', 'Notes']
@@ -178,6 +184,51 @@ function setup() {
   SpreadsheetApp.getActiveSpreadsheet().toast('Edit trigger installed. Edits now flow back to Discord.', 'Royal Bear', 6)
 }
 
+/**
+ * Run once in a freshly copied sheet. Wipes last split's typed entries from
+ * the Scores tab (names, judge scores, notes, verdicts) while keeping every
+ * formula, the rubric, the layout and the judge names, then installs the edit
+ * trigger. The Applicants tab needs nothing: the bot redraws it.
+ */
+function startNewSplit() {
+  const cleared = clearScores_()
+  setup()
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    'Cleared ' + cleared + ' old score cells and installed the edit trigger. Now deploy it as a new web app.',
+    'Royal Bear', 10)
+}
+
+/**
+ * Every block on the Scores tab starts with a row whose column A reads
+ * "Discord name" (the summary, then one per judge). Under each, until the next
+ * "Judge …" row, clear typed cells in columns A–O. Column P onwards holds the
+ * rubric and is never touched; neither is any cell holding a formula.
+ */
+function clearScores_() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SCORES_TAB)
+  if (!sheet) return 0
+  const last = sheet.getLastRow()
+  if (last < 2) return 0
+  const WIDTH = 15 // A–O
+  const range = sheet.getRange(1, 1, last, WIDTH)
+  const values = range.getValues()
+  const formulas = range.getFormulas()
+  let inBlock = false
+  let cleared = 0
+  for (let r = 0; r < last; r++) {
+    const first = String(values[r][0]).trim()
+    if (first === 'Discord name') { inBlock = true; continue }
+    if (/^Judge \d+/.test(first)) { inBlock = false; continue }
+    if (!inBlock) continue
+    for (let c = 0; c < WIDTH; c++) {
+      if (formulas[r][c] || values[r][c] === '') continue
+      sheet.getRange(r + 1, c + 1).clearContent()
+      cleared++
+    }
+  }
+  return cleared
+}
+
 // ---------------------------------------------------------------------------
 
 function fmt_(iso) {
@@ -194,7 +245,7 @@ function testDraw() {
   const sheet = ss.getSheetByName(TAB) || ss.insertSheet(TAB, 0)
   const header = ['Discord name', 'IGN', 'Peak rank', 'Current rank', 'Year', 'Team', 'Main role', 'Open to other roles?', 'Status', 'Notes', 'Applied', 'Tier list', 'op.gg', 'Ticket']
   redraw_(sheet, header, [
-    ['draatini', 'draatini#EUW', 'Emerald 1', 'Emerald 3', '2nd', 'A and B', 'Mid', 'Support', 'accepted', 'Solid comms', new Date().toISOString(), '', 'https://op.gg/summoners/euw/draatini-EUW', 'example-1'],
+    ['draatini', 'draatini#EUW', 'Emerald 1', 'Emerald 3', '2nd', 'B or C', 'Mid', 'Support', 'accepted', 'Solid comms', new Date().toISOString(), '', 'https://op.gg/summoners/euw/draatini-EUW', 'example-1'],
     ['connorgunn', 'Connor#0001', 'Diamond 4', 'Diamond 4', '3rd', 'B', 'Top', 'no', 'open', '', new Date().toISOString(), '', 'https://op.gg/summoners/euw/Connor-0001', 'example-2'],
   ], new Date().toISOString())
 }

@@ -9,6 +9,20 @@ function required(name: string): string {
   return value
 }
 
+/** "2026-11-24" → that day's 00:00 in London, as epoch ms. */
+function ukMidnight(date: string): number {
+  const utc = Date.parse(`${date}T00:00:00Z`)
+  if (Number.isNaN(utc)) {
+    console.error(`TRYOUTS_SINCE must look like 2026-11-24, got "${date}".`)
+    process.exit(1)
+  }
+  // London is UTC or UTC+1; take whatever offset applies at noon that day.
+  const noon = new Date(utc + 12 * 3600_000)
+  const london = new Date(noon.toLocaleString('en-US', { timeZone: 'Europe/London' }))
+  const utcNoon = new Date(noon.toLocaleString('en-US', { timeZone: 'UTC' }))
+  return utc - (london.getTime() - utcNoon.getTime())
+}
+
 export const config = {
   token: required('DISCORD_TOKEN'),
   guildId: required('GUILD_ID'),
@@ -29,6 +43,12 @@ export const config = {
   sheetWebhook: process.env.GOOGLE_SHEET_WEBHOOK,
   sheetSecret: process.env.GOOGLE_SHEET_SECRET,
   sheetUrl: process.env.GOOGLE_SHEET_URL,
+  /**
+   * Start of this split's tryouts (e.g. 2026-11-24, read as UK midnight). Tickets
+   * opened earlier stay in the database but drop off the sheet, the board and
+   * /applicants. Unset = every ticket ever.
+   */
+  tryoutsSince: process.env.TRYOUTS_SINCE ? ukMidnight(process.env.TRYOUTS_SINCE) : undefined,
 }
 
 export const ROLE_NAMES = {
