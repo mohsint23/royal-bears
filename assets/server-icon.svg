@@ -1,24 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Soundbard Dominion: a crowned bell sending out sound. Bold shapes so it reads at 48px. -->
   <defs>
-    <linearGradient id="navy" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#3a74f0"/><stop offset="50%" stop-color="#1b3f96"/><stop offset="100%" stop-color="#070f24"/>
-    </linearGradient>
+    <radialGradient id="night" cx="50%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#2f4fb8"/><stop offset="55%" stop-color="#16246b"/><stop offset="100%" stop-color="#070b24"/>
+    </radialGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#ffe89a"/><stop offset="52%" stop-color="#e6b422"/><stop offset="100%" stop-color="#a87a0c"/>
     </linearGradient>
+    <linearGradient id="goldSide" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#a87a0c"/><stop offset="35%" stop-color="#ffe08a"/><stop offset="100%" stop-color="#c9930f"/>
+    </linearGradient>
   </defs>
-  <rect width="512" height="512" fill="url(#navy)"/>
-  <!-- crown, clear above the ears so it stays readable small -->
-  <path d="M166 130 L166 74 L208 108 L256 52 L304 108 L346 74 L346 130 Z" fill="url(#gold)"/>
-  <!-- ears: full circles behind the head -->
-  <circle cx="160" cy="212" r="48" fill="url(#gold)"/>
-  <circle cx="352" cy="212" r="48" fill="url(#gold)"/>
-  <!-- angular head -->
-  <path d="M256 168 L364 212 L378 304 L318 396 L256 420 L194 396 L134 304 L148 212 Z" fill="url(#gold)"/>
-  <!-- angry eyes -->
-  <path d="M186 272 L240 288 L238 312 L184 296 Z" fill="#0b1631"/>
-  <path d="M326 272 L272 288 L274 312 L328 296 Z" fill="#0b1631"/>
-  <!-- muzzle -->
-  <path d="M256 320 L308 340 L298 382 L256 396 L214 382 L204 340 Z" fill="#0b1631"/>
-  <path d="M256 334 L284 347 L273 370 L256 376 L239 370 L228 347 Z" fill="url(#gold)"/>
+  <rect width="512" height="512" fill="url(#night)"/>
+
+  <!-- a few stars; they drop out at small sizes, which is fine -->
+  <g fill="#fff3c4">
+    <circle cx="92" cy="104" r="5"/><circle cx="420" cy="92" r="4"/><circle cx="440" cy="430" r="5"/>
+    <circle cx="70" cy="438" r="3.5"/><circle cx="388" cy="168" r="3"/><circle cx="128" cy="176" r="3"/>
+  </g>
+
+  <!-- sound waves, both sides of the bell -->
+  <g fill="none" stroke="url(#gold)" stroke-width="24" stroke-linecap="round">
+    <path d="M118 222 A146 146 0 0 0 118 356"/>
+    <path d="M394 222 A146 146 0 0 1 394 356"/>
+    <path d="M72 196 A200 200 0 0 0 72 382" opacity="0.75"/>
+    <path d="M440 196 A200 200 0 0 1 440 382" opacity="0.75"/>
+  </g>
+
+  <!-- crown -->
+  <path d="M194 160 L194 98 L226 122 L256 76 L286 122 L318 98 L318 160 Z" fill="url(#gold)"/>
+  <circle cx="194" cy="94" r="10" fill="url(#gold)"/>
+  <circle cx="256" cy="72" r="11" fill="url(#gold)"/>
+  <circle cx="318" cy="94" r="10" fill="url(#gold)"/>
+
+  <!-- bell -->
+  <path d="M256 158 C200 158 178 204 178 262 L178 314 C178 340 158 356 140 368 L372 368 C354 356 334 340 334 314 L334 262 C334 204 312 158 256 158 Z" fill="url(#goldSide)"/>
+  <rect x="128" y="366" width="256" height="26" rx="13" fill="url(#gold)"/>
+  <!-- clapper -->
+  <circle cx="256" cy="414" r="22" fill="url(#gold)"/>
+  <!-- dark band for depth -->
+  <path d="M181 298 L331 298 L331 316 L181 316 Z" fill="#8a6208" opacity="0.7"/>
 </svg>
