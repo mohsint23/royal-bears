@@ -1,27 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 256" width="1024" height="256">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 180" width="1024" height="180">
+  <!-- #get-roles banner: a slim strip. The hooded bard peeks in from the right; chimes trail across. -->
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#22499f"/><stop offset="55%" stop-color="#12295e"/><stop offset="100%" stop-color="#070f24"/>
+    <radialGradient id="cosmos" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#3b3fa8"/><stop offset="50%" stop-color="#1c1c62"/><stop offset="100%" stop-color="#080822"/>
+    </radialGradient>
+    <linearGradient id="cloth" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffaf0"/><stop offset="60%" stop-color="#efe1c2"/><stop offset="100%" stop-color="#c9b48a"/>
     </linearGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffe89a"/><stop offset="55%" stop-color="#e6b422"/><stop offset="100%" stop-color="#b3830f"/>
+      <stop offset="0%" stop-color="#ffe89a"/><stop offset="52%" stop-color="#f0b82a"/><stop offset="100%" stop-color="#b07a0a"/>
     </linearGradient>
-    <clipPath id="frame"><rect width="1024" height="256" rx="18"/></clipPath>
+    <radialGradient id="void" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#1d1f5c"/><stop offset="100%" stop-color="#05061a"/>
+    </radialGradient>
+    <radialGradient id="chimeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffe9a0" stop-opacity="0.9"/><stop offset="100%" stop-color="#ffcf4a" stop-opacity="0"/>
+    </radialGradient>
+  
+    <linearGradient id="strip" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0a0a2a"/><stop offset="60%" stop-color="#1f2070"/><stop offset="100%" stop-color="#34297a"/>
+    </linearGradient>
+    <clipPath id="frame"><rect width="1024" height="180" rx="16"/></clipPath>
   </defs>
   <g clip-path="url(#frame)">
-    <rect width="1024" height="256" fill="url(#bg)"/>
-    <!-- oversized bear watermark, bled off the right edge -->
-    <g opacity="0.13" transform="translate(792 128) scale(0.86) translate(-256 -280)">
-      <path d="M166 130 L166 74 L208 108 L256 52 L304 108 L346 74 L346 130 Z" fill="#e6b422"/>
-      <circle cx="160" cy="212" r="48" fill="#e6b422"/><circle cx="352" cy="212" r="48" fill="#e6b422"/>
-      <path d="M256 168 L364 212 L378 304 L318 396 L256 420 L194 396 L134 304 L148 212 Z" fill="#e6b422"/>
-    </g>
-    <!-- diagonal accent -->
-    <path d="M0 256 L150 0 L196 0 L46 256 Z" fill="#e6b422" opacity="0.16"/>
-    <text x="72" y="84" font-family="Helvetica-Bold, Helvetica, Arial, sans-serif" font-size="26"
-          font-weight="bold" fill="url(#gold)" letter-spacing="7">ROYAL BEARS</text>
-    <text x="72" y="152" font-family="Helvetica-Bold, Helvetica, Arial, sans-serif" font-size="60"
-          font-weight="bold" fill="#ffffff" letter-spacing="1">Grab your roles</text>
-    <rect x="72" y="182" width="120" height="5" rx="2.5" fill="url(#gold)"/>
+    <rect width="1024" height="180" fill="url(#strip)"/>
+    <g fill="#fff3c4"><circle cx="251" cy="157" r="2" opacity="0.4"/><circle cx="386" cy="160" r="1.6" opacity="0.85"/><circle cx="602" cy="22" r="2" opacity="0.4"/><circle cx="938" cy="126" r="1.6" opacity="0.85"/><circle cx="247" cy="55" r="2" opacity="0.6"/><circle cx="561" cy="146" r="1.6" opacity="0.6"/><circle cx="662" cy="44" r="1.2" opacity="0.85"/><circle cx="163" cy="139" r="1.6" opacity="0.85"/><circle cx="23" cy="22" r="1.2" opacity="0.85"/><circle cx="51" cy="83" r="1.2" opacity="0.6"/><circle cx="492" cy="158" r="2" opacity="0.6"/><circle cx="739" cy="115" r="1.6" opacity="0.85"/><circle cx="828" cy="153" r="1.6" opacity="0.4"/><circle cx="907" cy="99" r="1.2" opacity="0.4"/><circle cx="147" cy="132" r="1.2" opacity="0.6"/><circle cx="996" cy="117" r="2" opacity="0.6"/><circle cx="439" cy="135" r="1.6" opacity="0.85"/><circle cx="367" cy="142" r="2" opacity="0.6"/><circle cx="606" cy="65" r="1.6" opacity="0.85"/><circle cx="945" cy="13" r="1.6" opacity="0.85"/><circle cx="695" cy="47" r="2" opacity="0.6"/><circle cx="995" cy="144" r="2" opacity="0.85"/><circle cx="114" cy="173" r="1.2" opacity="0.85"/><circle cx="859" cy="152" r="1.6" opacity="0.6"/><circle cx="135" cy="22" r="1.6" opacity="0.85"/><circle cx="503" cy="28" r="1.6" opacity="0.4"/><circle cx="428" cy="44" r="1.2" opacity="0.6"/><circle cx="445" cy="112" r="1.2" opacity="0.4"/><circle cx="627" cy="163" r="1.2" opacity="0.6"/><circle cx="743" cy="156" r="1.6" opacity="0.85"/><circle cx="910" cy="77" r="2" opacity="0.4"/><circle cx="44" cy="85" r="1.2" opacity="0.4"/><circle cx="118" cy="159" r="2" opacity="0.4"/><circle cx="979" cy="56" r="1.6" opacity="0.6"/><circle cx="633" cy="73" r="1.2" opacity="0.85"/><circle cx="51" cy="92" r="1.6" opacity="0.6"/><circle cx="989" cy="41" r="1.6" opacity="0.6"/><circle cx="479" cy="139" r="1.6" opacity="0.85"/><circle cx="895" cy="158" r="2" opacity="0.85"/><circle cx="113" cy="164" r="2" opacity="0.6"/><circle cx="449" cy="168" r="2" opacity="0.85"/><circle cx="251" cy="83" r="1.6" opacity="0.6"/><circle cx="541" cy="83" r="2" opacity="0.6"/><circle cx="19" cy="112" r="2" opacity="0.6"/><circle cx="28" cy="102" r="2" opacity="0.85"/></g>
+    <path d="M520 150 C620 120 700 80 790 50" fill="none" stroke="#ffe08a" stroke-width="2.5" stroke-dasharray="2 12" stroke-linecap="round" opacity="0.8"/>
+    <circle cx="560" cy="138" r="16" fill="url(#chimeGlow)"/><circle cx="560" cy="138" r="7" fill="url(#gold)"/><ellipse cx="560" cy="138" rx="12" ry="4" fill="none" stroke="#ffe08a" stroke-width="3" transform="rotate(-15 560 138)"/><circle cx="660" cy="104" r="21" fill="url(#chimeGlow)"/><circle cx="660" cy="104" r="9" fill="url(#gold)"/><ellipse cx="660" cy="104" rx="16" ry="5" fill="none" stroke="#ffe08a" stroke-width="3" transform="rotate(-18 660 104)"/><circle cx="760" cy="64" r="23" fill="url(#chimeGlow)"/><circle cx="760" cy="64" r="10" fill="url(#gold)"/><ellipse cx="760" cy="64" rx="18" ry="6" fill="none" stroke="#ffe08a" stroke-width="3" transform="rotate(-12 760 64)"/>
+    <!-- the bard, cropped by the strip: hood and face only -->
+    <g transform="translate(846 -6) scale(0.42)"><!-- robe and hood, one silhouette: the hood's tip flops back to the right -->
+  <path d="M256 128
+           C332 120 394 152 426 204
+           C442 230 454 256 462 286
+           C442 270 422 262 404 262
+           C418 316 436 374 470 512
+           L42 512
+           C76 360 92 300 104 246
+           C112 178 180 132 256 128 Z" fill="url(#cloth)"/>
+  <!-- gold trim down the front of the robe -->
+  <path d="M232 384 L280 384 L300 512 L212 512 Z" fill="url(#gold)"/>
+  <!-- face: a shadowed opening ringed in gold -->
+  <path d="M256 194 C306 194 334 236 334 288 C334 340 300 372 256 372 C212 372 178 340 178 288 C178 236 206 194 256 194 Z"
+        fill="url(#void)" stroke="url(#gold)" stroke-width="14"/>
+  <!-- two faint eyes in the dark -->
+  <ellipse cx="230" cy="290" rx="9" ry="13" fill="#ffe9a0" opacity="0.85"/>
+  <ellipse cx="282" cy="290" rx="9" ry="13" fill="#ffe9a0" opacity="0.85"/>
+
+  <!-- crown, floating above the hood -->
+  <path d="M206 112 L206 70 L232 90 L256 54 L280 90 L306 70 L306 112 Z" fill="url(#gold)"/>
+  <circle cx="206" cy="66" r="8" fill="url(#gold)"/>
+  <circle cx="256" cy="50" r="9" fill="url(#gold)"/>
+  <circle cx="306" cy="66" r="8" fill="url(#gold)"/>
+
+  </g>
+    <text x="56" y="66" font-family="Helvetica-Bold, Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="url(#gold)" letter-spacing="6">SOUNDBARD DOMINION</text>
+    <text x="56" y="124" font-family="Helvetica-Bold, Helvetica, Arial, sans-serif" font-size="52" font-weight="bold" fill="#ffffff">Grab your roles</text>
+    <rect x="56" y="144" width="110" height="5" rx="2.5" fill="url(#gold)"/>
   </g>
 </svg>
