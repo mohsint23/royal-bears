@@ -10,6 +10,7 @@ import {
   Events,
   GatewayIntentBits,
   MessageFlags,
+  Partials,
   REST,
   Routes,
   type Interaction,
@@ -19,6 +20,7 @@ import { byName, commands } from './commands/index.js'
 import { handleSetKeyModal, SETKEY_MODAL } from './commands/setkey.js'
 import { handleScrimButton, isScrimButton } from './commands/scrim.js'
 import { handleRoleButton, isRoleButton } from './roles.js'
+import { onColourReactionAdd, onColourReactionRemove, syncColours } from './colours.js'
 import {
   handleTicketButton,
   handleTicketMessage,
@@ -39,13 +41,17 @@ import { startDecay } from './jobs/decay.js'
 
 // GuildMessages + MessageContent exist only so tryout tickets can read typed
 // answers; MessageContent is a privileged intent switched on in the portal.
+// GuildMessageReactions + the partials drive the #colours picker: without the
+// partials, reactions on a message the bot has not cached are dropped silently.
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions,
   ],
+  partials: [Partials.Message, Partials.Reaction, Partials.User],
 })
 
 async function registerCommands(applicationId: string) {
@@ -61,6 +67,7 @@ client.once(Events.ClientReady, async (ready) => {
   applySeed()
   await resumeTickets(client).catch((err) => console.error('Could not resume tryout tickets:', err))
   await refreshPlayerDatabaseFor(client)
+  await syncColours(client).catch((err) => console.error('Could not sync the colour picker:', err))
   await loadChampions().catch((err) => console.error('Could not load champion list:', err))
   await registerCommands(ready.user.id)
 
@@ -119,6 +126,14 @@ client.on(Events.GuildMemberAdd, (member) => {
 
 client.on(Events.MessageCreate, (message) => {
   handleTicketMessage(message).catch((err) => console.error('[tickets] message:', err))
+})
+
+client.on(Events.MessageReactionAdd, (reaction, user) => {
+  onColourReactionAdd(reaction, user).catch((err) => console.error('[colours] add:', err))
+})
+
+client.on(Events.MessageReactionRemove, (reaction, user) => {
+  onColourReactionRemove(reaction, user).catch((err) => console.error('[colours] remove:', err))
 })
 
 // Without a listener, a gateway error (a rate-limited member fetch, a dropped
