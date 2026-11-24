@@ -75,6 +75,7 @@ export function topicText(): string {
     '/multi a|b|c — one op.gg link for a roster',
     '/pool upload image: — upload your tier list',
     '/pool view user:|team: — see tier lists',
+    '/ping game: — ping League, Overwatch, Deadlock or Among Us (role holders only)',
     '',
     'Staff: /scrim, /refresh, /setkey',
     'Tracker quiet? The Riot key expires daily — staff run /setkey.',
