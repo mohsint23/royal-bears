@@ -142,6 +142,7 @@ export const ROLES: RoleDef[] = [
   { name: 'Valorant', mentionable: true },
   { name: 'Deadlock', mentionable: true },
   { name: 'Among Us', mentionable: true },
+  { name: 'Dead by Daylight', mentionable: true },
   // Self-assigned from #get-roles: opens the INHOUSES category and is the ping for lobbies.
   { name: ROLE.inhouses, mentionable: true },
 
