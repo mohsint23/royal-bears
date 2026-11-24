@@ -13,7 +13,7 @@ export type QuestionKind = 'text' | 'team' | 'image'
 const LIST = [
   { key: 'riot_id', label: 'Riot ID', kind: 'text', prompt: 'Riot ID? Like `Name#TAG` — it goes on your card as an op.gg link.' },
   { key: 'year', label: 'Year', kind: 'text', prompt: 'What year are you in at uni? (1st, 2nd, 3rd, 4th, masters, PhD…)' },
-  { key: 'team', label: 'Applying for', kind: 'team', prompt: 'Which team are you applying for? **A**, **B**, or **A and B**.' },
+  { key: 'team', label: 'Applying for', kind: 'team', prompt: 'Which team are you applying for? **A**, **B** or **C**. Happy with more than one? Say so, like **B or C**, or **any**.' },
   { key: 'peak_rank', label: 'Peak rank', kind: 'text', prompt: 'Peak rank?' },
   { key: 'current_rank', label: 'Current rank', kind: 'text', prompt: 'Current rank?' },
   { key: 'main_role', label: 'Main role', kind: 'text', prompt: 'Main role?' },
@@ -77,14 +77,33 @@ export function parseRiotId(input: string): { gameName: string; tagLine: string 
   return { gameName: name.trim(), tagLine: tag.trim() }
 }
 
-export const TEAMS = ['A', 'B', 'A and B'] as const
+export const TEAMS = ['A', 'B', 'C', 'A or B', 'B or C', 'Any'] as const
 export type TeamChoice = (typeof TEAMS)[number]
 
-/** "a", "team b", "both", "a & b", "a and b" → one of TEAMS. */
+/** Last split's "A and B" answers still sit in the database; they meant this. */
+const LEGACY: Record<string, TeamChoice> = { 'a and b': 'A or B' }
+
+const BY_LETTERS: Record<string, TeamChoice> = {
+  a: 'A', b: 'B', c: 'C', ab: 'A or B', bc: 'B or C', ac: 'Any', abc: 'Any',
+}
+const FILLER = new Set(['and', 'or', 'n', 'both'])
+const ANY = new Set(['any', 'either', 'all', 'anything', 'whichever', 'any of them'])
+
+/**
+ * "a", "team b", "b or c", "a/b", "b & c", "any" → one of TEAMS.
+ * A bare "both" is refused now that there are three teams: both of which?
+ */
 export function parseTeam(input: string): TeamChoice | undefined {
-  const t = input.toLowerCase().replace(/team/g, '').replace(/[^a-z&+/]/g, '')
-  if (t === 'both' || t === 'aandb' || t === 'bothab' || t === 'ab' || t === 'a&b' || t === 'a+b' || t === 'a/b' || t === 'either' || t === 'aorb') return 'A and B'
-  if (t === 'a') return 'A'
-  if (t === 'b') return 'B'
-  return undefined
+  const raw = input.trim().toLowerCase()
+  if (LEGACY[raw]) return LEGACY[raw]
+  const words = raw.replace(/teams?/g, ' ').split(/[^a-z]+/).filter(Boolean)
+  if (!words.length) return undefined
+  if (words.every((w) => ANY.has(w) || FILLER.has(w)) && words.some((w) => ANY.has(w))) return 'Any'
+
+  const letters = new Set<string>()
+  for (const w of words) {
+    if (/^[abc]+$/.test(w)) for (const ch of w) letters.add(ch)
+    else if (!FILLER.has(w)) return undefined
+  }
+  return BY_LETTERS[[...letters].sort().join('')]
 }

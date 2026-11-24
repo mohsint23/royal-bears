@@ -265,7 +265,7 @@ async function readAnswer(message: Message<true>, question: Question, ticket: Ti
   if (question.kind === 'team') {
     const team = parseTeam(text)
     if (!team) {
-      await message.reply('Just **A**, **B**, or **A and B**.')
+      await message.reply('Just **A**, **B** or **C**, or a mix like **B or C**, or **any**.')
       return undefined
     }
     return team
