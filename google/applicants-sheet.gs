@@ -54,11 +54,15 @@ function redraw_(sheet, header, rows, updated) {
   const lock = LockService.getDocumentLock()
   lock.waitLock(20000)
   try {
+    // Unfreeze and unmerge first: a copied sheet can carry a title merge that
+    // crosses the frozen column, and Sheets refuses to touch it ("You can't
+    // merge frozen and non-frozen columns"). Freezing goes back on at the end.
+    sheet.setFrozenRows(0)
+    sheet.setFrozenColumns(0)
+    sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).breakApart()
     sheet.clear()
     sheet.clearConditionalFormatRules()
     sheet.getDataRange().clearDataValidations()
-    sheet.setFrozenRows(2)
-    sheet.setFrozenColumns(1)
 
     const cols = header.length
     const col = function (name) { return header.indexOf(name) + 1 }
@@ -132,6 +136,10 @@ function redraw_(sheet, header, rows, updated) {
     }
     layout_(sheet, header)
   } finally {
+    // Runs on the empty-sheet early return too. Header rows always; the name
+    // column only if Sheets accepts it next to the merged title.
+    try { sheet.setFrozenRows(2) } catch (err) {}
+    try { sheet.setFrozenColumns(1) } catch (err) {}
     lock.releaseLock()
   }
 }
