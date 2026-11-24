@@ -44,7 +44,7 @@ export type RoleDef = {
 export const ROLES: RoleDef[] = [
   {
     name: ROLE.staff,
-    color: 0xe6b422,
+    // No colour: staff names show their team colour (picked colour > team > rank).
     hoist: true,
     mentionable: true,
     permissions: [
@@ -64,7 +64,7 @@ export const ROLES: RoleDef[] = [
   },
   {
     name: ROLE.officer,
-    color: 0xb87be8,
+    // No colour, as Staff.
     hoist: true,
     mentionable: true,
     permissions: [
@@ -101,7 +101,7 @@ export const ROLES: RoleDef[] = [
   },
   {
     name: ROLE.coach,
-    color: 0xc0a062,
+    // No colour, as Staff.
     hoist: true,
     mentionable: true,
     permissions: [P.ManageMessages, P.ManageEvents, P.MentionEveryone, P.MuteMembers, P.MoveMembers],
