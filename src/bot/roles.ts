@@ -81,7 +81,7 @@ export function roleMessages(ref: (name: string) => string) {
   const games = card(
     '🎮 Game roles',
     'Tap a game to get pinged when people want to play. Tap it again to leave.\n\n' +
-      'Only people with a game role can ping it: run `/ping game:` and the bot does the @.',
+      'Want a game? @ the role, like @Valorant, in any chat.',
   )
 
   const inhouses = card(
@@ -201,7 +201,7 @@ export async function handleRoleButton(i: ButtonInteraction) {
     await i.reply({
       content: had
         ? `Dropped **${wanted}**. No more ${wanted} pings.`
-        : `You've got **${wanted}**. You'll get pinged when someone wants a game, and you can call one with \`/ping game:\`.`,
+        : `You've got **${wanted}**. You'll get pinged when someone wants a game, and you can call one by @-ing the role.`,
       flags: MessageFlags.Ephemeral,
     })
     return

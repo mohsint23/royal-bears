@@ -136,12 +136,12 @@ export const ROLES: RoleDef[] = [
   { name: 'Mid', mentionable: true },
   { name: 'ADC', mentionable: true },
   { name: 'Support', mentionable: true },
-  // Game roles (src/bot/games.ts). Not mentionable: only holders and admins
-  // can ping them, through /ping. No colour, so they never colour a name.
-  { name: 'League' },
-  { name: 'Overwatch' },
-  { name: 'Deadlock' },
-  { name: 'Among Us' },
+  // Game roles (src/bot/games.ts). Anyone can @ them. No colour, so they never colour a name.
+  { name: 'League', mentionable: true },
+  { name: 'Overwatch', mentionable: true },
+  { name: 'Valorant', mentionable: true },
+  { name: 'Deadlock', mentionable: true },
+  { name: 'Among Us', mentionable: true },
   // Self-assigned from #get-roles: opens the INHOUSES category and is the ping for lobbies.
   { name: ROLE.inhouses, mentionable: true },
 
