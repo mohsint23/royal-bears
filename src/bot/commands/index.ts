@@ -6,7 +6,6 @@ import { help } from './help.js'
 import { leaderboard } from './leaderboard.js'
 import { letin } from './letin.js'
 import { multi } from './multi.js'
-import { ping } from './ping.js'
 import { pace } from './pace.js'
 import { pool } from './pool.js'
 import { profile } from './profile.js'
@@ -18,7 +17,7 @@ import { team } from './team.js'
 import type { Command } from './types.js'
 
 export const commands: Command[] = [
-  register, accounts, profile, team, leaderboard, multi, pool, scrim, ping, help,
+  register, accounts, profile, team, leaderboard, multi, pool, scrim, help,
   pace, champ, decay, refresh, setkey, applicants, letin,
 ]
 
