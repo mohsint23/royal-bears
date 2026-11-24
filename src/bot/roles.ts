@@ -23,14 +23,14 @@ import {
 } from 'discord.js'
 import { POSITIONS, type Position } from './config.js'
 import { baseEmbed, GOLD } from './format.js'
+import { GAMES } from './games.js'
 
 const PREFIX = 'role:'
 const CLEAR = 'role:__clear'
 const TRYOUT = 'role:__tryout'
 const TRYOUT_ROLE = 'Tryout'
 const MEMBER_ROLE = 'Member'
-const GAMERS = 'role:__gamers'
-const GAMERS_ROLE = 'Gamers'
+const GAME = 'role:__game:'
 const INHOUSES = 'role:__inhouses'
 const INHOUSES_ROLE = 'Inhouses'
 const BANNER = 'banner-roles.png'
@@ -64,11 +64,6 @@ export function roleButtons() {
         .setEmoji('🎮')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
-        .setCustomId(GAMERS)
-        .setLabel('Ping me for games')
-        .setEmoji('🔔')
-        .setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder()
         .setCustomId(TRYOUT)
         .setLabel("I'm here to trial")
         .setEmoji('🎯')
@@ -78,6 +73,15 @@ export function roleButtons() {
         .setLabel('Clear my lanes')
         .setEmoji('🧹')
         .setStyle(ButtonStyle.Secondary),
+    ),
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
+      ...GAMES.map((g) =>
+        new ButtonBuilder()
+          .setCustomId(`${GAME}${g.key}`)
+          .setLabel(g.role)
+          .setEmoji(g.emoji)
+          .setStyle(ButtonStyle.Secondary),
+      ),
     ),
   ]
 }
@@ -108,10 +112,10 @@ export function rolesEmbed(ref: (name: string) => string) {
           '@Inhouses is the ping when a lobby needs bodies. Tap again to leave.',
       },
       {
-        name: '🔔 Want pinging for games?',
+        name: '🎮 Game roles',
         value:
-          'Hit **Ping me for games** for the **Gamers** role. Anyone can @Gamers when a flex, Clash or ' +
-          'ARAM lobby needs bodies. Tap again to stop the pings.',
+          'Tap **League**, **Overwatch**, **Deadlock** or **Among Us** to get pinged when people want a game. ' +
+          'Only people with a game role can ping it: use `/ping game:` and the bot does the @. Tap again to leave.',
       },
       {
         name: '🎯 Here to trial? (uni students)',
@@ -131,7 +135,7 @@ export function rolesEmbed(ref: (name: string) => string) {
 
 /** Everything a member can hand themselves from this message. */
 function selfAssignable(guild: Guild): Role[] {
-  return [...POSITIONS, TRYOUT_ROLE, GAMERS_ROLE, INHOUSES_ROLE]
+  return [...POSITIONS, TRYOUT_ROLE, INHOUSES_ROLE, ...GAMES.map((g) => g.role)]
     .map((name) => guild.roles.cache.find((r) => r.name === name))
     .filter((r): r is Role => Boolean(r))
 }
@@ -179,7 +183,7 @@ export async function handleRoleButton(i: ButtonInteraction) {
 
   const wanted =
     i.customId === TRYOUT ? TRYOUT_ROLE
-    : i.customId === GAMERS ? GAMERS_ROLE
+    : i.customId.startsWith(GAME) ? (GAMES.find((g) => `${GAME}${g.key}` === i.customId)?.role ?? '')
     : i.customId === INHOUSES ? INHOUSES_ROLE
     : i.customId.slice(PREFIX.length)
   const role = selfAssignable(guild).find((r) => r.name === wanted)
@@ -214,11 +218,11 @@ export async function handleRoleButton(i: ButtonInteraction) {
     return
   }
 
-  if (i.customId === GAMERS) {
+  if (i.customId.startsWith(GAME)) {
     await i.reply({
       content: had
-        ? 'Dropped **Gamers** — no more game pings.'
-        : "You've got **Gamers**. You'll get pinged when a flex, Clash or ARAM lobby needs people.",
+        ? `Dropped **${wanted}**. No more ${wanted} pings.`
+        : `You've got **${wanted}**. You'll get pinged when someone wants a game, and you can call one with \`/ping game:\`.`,
       flags: MessageFlags.Ephemeral,
     })
     return

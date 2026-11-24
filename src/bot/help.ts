@@ -18,8 +18,9 @@ const EVERYONE: readonly (readonly [string, string])[] = [
   ['/pool view `[user]` `[team]`', 'Show a player’s tier list, or a whole roster’s at once. Leave both off for your own.'],
   ['/pool remove', 'Delete one of your tier lists.'],
   ['/decay `[refresh]`', 'Days of ranked decay each Diamond+ account has banked. Anyone running low gets pinged at 10:00.'],
+  ['/ping `game:` `[message]`', 'Ping a game role (League, Overwatch, Deadlock, Among Us). Only people with that role can use it.'],
   ['/help', 'This message.'],
-  ['Position roles', 'Not a command — the buttons in #get-roles set Top, Jungle, Mid, ADC and Support.'],
+  ['Position and game roles', 'Not a command — the buttons in #get-roles set your lanes and your game roles.'],
 ]
 
 const STAFF: readonly (readonly [string, string])[] = [
